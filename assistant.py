@@ -11,6 +11,7 @@ def parser(text):
 def checktime(sentences):
     for sentence in sentences:
         setence.lower()
+        sentence.lower()
         match = re.search(r'(\d+)\s*minutes', sentence) # Checks if minutes is within the sentence
         
         if match:
@@ -21,15 +22,25 @@ def checktime(sentences):
 
 
 def checktemp(text): # Checks if recipe asks for temp
+    # Find instances of temperature, Celsius symbol, farenheit 
+    # The check if there is a time given
+        # make a timer function
+        # "Boil the water for 10 minutes" -> start timer after temperature is 100
+    for sentence in text:
+        sentence.lower()
+        match = re.search(r'')
+    return None
 
 def scale(): # Puts scale on screen?
+    return
 
 def TTS(text): # Speaks text and character on screen
+    return
 
 
 for i in range(len(sentences)):
     ##API call for Character as well as speaking
-    if checktime(setences):
+    if checktime(sentences):
         
 
 
