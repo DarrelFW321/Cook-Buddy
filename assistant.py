@@ -46,6 +46,13 @@ def scale(text): # Puts scale on screen?
         if match:
             # Define function to check scale immediately
     return None
+=======
+        match = re.search(r'')
+    return None
+
+def scale(): # Puts scale on screen?
+    return
+>>>>>>> 672ec49f3a23ed22fbe6424f7bdfc8db0f0e3fc7
 
 def TTS(text): # Speaks text and character on screen
     return
