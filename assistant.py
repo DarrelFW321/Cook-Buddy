@@ -10,7 +10,8 @@ def parser(text):
 
 def checktime(sentences):
     for sentence in sentences:
-        setence.lower()
+        sentence.lower()
+        # Should also check for hours, and hours and minutes combined
         match = re.search(r'(\d+)\s*minutes', sentence) # Checks if minutes is within the sentence
         
         if match:
@@ -21,15 +22,39 @@ def checktime(sentences):
 
 
 def checktemp(text): # Checks if recipe asks for temp
+    # Find instances of temperature, Celsius symbol, farenheit 
+    # The check if there is a time given
+        # make a timer function
+        # "Boil the water for 10 minutes" -> start timer after temperature is 100
+    for sentence in text:
+        sentence.lower()
+        match = re.search(r'(\d+\.\d+)°C', sentence) or re.search(r'(\d+)°C', sentence) or re.search(r'(\d+\.\d+)F', sentence) or re.search(r'(\d+)F', sentence) or re.search(r'(\d+\.\d+)\s(degrees Celsius)', sentence) or re.search(r'(\d+)\s(degrees Celsius)', sentence) or re.search(r'(\d+\.\d+)\s Fahrenheit') or re.search(r'(\d+)\s Fahrenheit') or re.search(r'temperature')
 
-def scale(): # Puts scale on screen?
+        if match:
+            # modify this search for hours and hours and minutes combined
+            # Allow assistant to now anticipate "I'm done"
+            time_match = re.search(r'(\d+)\s*minutes', sentence)
+            # Define timer function
+
+    return None
+
+def scale(text): # Puts scale on screen?
+    for sentence in text:
+        sentence.lower()
+        match = re.search(r'(\d+)\s*grams') or re.search(r'(\d+\.\d+)\s*grams')
+
+        if match:
+            # Define function to check scale immediately
+    return None
 
 def TTS(text): # Speaks text and character on screen
+    return
 
 
 for i in range(len(sentences)):
     ##API call for Character as well as speaking
-    if checktime(setences):
+    if checktime(sentences):
         
+
 
 
