@@ -1,14 +1,18 @@
 import re
-import time
 import threading
+import time
 import queue
-from pi import *
+from parse import *
 
 class assistant: 
     static_timer = False  # global static context variables
     static_scale = False
+    static_scale_value = 0
     static_audio = False
-
+    static_temp = False
+    static_temp_value = 0
+    static_on = True
+    
     @classmethod
     def interrupt_timer(cls):  #need to change using queue
         while assistant.static_audio:  # So two instructions are not at the same time
@@ -27,112 +31,47 @@ class assistant:
         timer_thread = threading.Thread(target=assistant.start_timer, args=(seconds,))
         timer_thread.daemon = True  # low priority thread
         timer_thread.start()
-        time
-
-# Sample text
-text = """
-Preheat the oven to 180°C for 5 seconds.
-"""
-
-# Parses LLM Instructions for recipe
-def parser(text):
-    sentences = re.split(r'[.\n]', text)
-    sentences = [sentence.strip() for sentence in sentences if sentence]
-    return sentences
-
-# Handles fractional values
-def convert_to_decimal(value):
-    if value is None: return 0.0
-    if '/' in value:
-        numerator, denominator = value.split('/')
-        return float(numerator) / float(denominator)
-    return float(value)
-
-def parse_time(sentence):
-    match = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(hour|hours?)', sentence)
-    match2 = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(minute|minutes?)', sentence)
-    match3 = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(second|seconds?)', sentence)
+        
+class instruction:
+    static_recipe_query = False
+    static_new_recipe = False
+    static_recipe = False
+    static_current_recipe=[]
+    static_recipe_index = 0
+    static_interrupt = False
     
-    if match or match2 or match3:
-        if match: hours = match.group(1)
-        else: hours = '0'
-        if match2: minutes = match2.group(1)
-        else: minutes = '0'
-        if match3: seconds = int(match3.group(1))
-        else: seconds = 0
-
-        hours = convert_to_decimal(hours)
-        minutes = convert_to_decimal(minutes)
-
-        total_time = 360 * hours + 60 * minutes + seconds
-        return total_time
-    return None
-
-def checktime(sentences):
-    for sentence in sentences:
-        sentence = sentence.lower()
-        time = parse_time(sentence)
-        if time:
-            print(f"Checking sentence:{sentence}")
-            return time
-    return None
-
-def checktemp(text):
-    for sentence in text:
-        sentence.lower()
-        print(f"Checking sentence:{sentence}")
-        match = re.search(r'(\d+\.\d+)°C', sentence) or re.search(r'(\d+)°C', sentence) or re.search(r'(\d+\.\d+)F', sentence) or re.search(r'(\d+)F', sentence)
-
-        if match:
-            temperature = match.group(1)
-            print(f"Temperature detected: {temperature}°")
-            seconds = parse_time(sentence)
-            # TODO: Need to differentiate between Fahrenheit and Celsius
-            if seconds and seconds > 0:
-                monitorTemp(temperature, seconds)
-            else:
-                return temperature    
-    return None
+def start_recipe():
+    LLM_out = send_LLML(audio)
+    static_current_recipe = LLM_out.split()
+    output_response(instruction.static_recipe, instruction.static_)
 
 
 
 
-def scale(text):
-    for sentence in text:
-        sentence.lower()
-        match_grams = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(gram|grams)', sentence)
-        match_kgs = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(kg|kgs)', sentence)
-        match_lb = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(lb|lbs)', sentence)
-        amount_in_grams = 0
 
-        if match_grams:
-            amount = match_grams.group(1)
-            amount_in_grams = convert_to_decimal(amount)
+#main loop
+while(assistant.static_on):
+    #receive mic audio
+    
+    #stt (receive instruction)
+    
+    #send to llm
+    
+    if(assistant.static_recipe_query): #if asks anything regarding recipe ( )
+        if (assistant.recipe):
+            new_recipe_query()
+            if(next_step()):
+                continue_recipe()
+        else:
+            start_recipe()
+            
+            
+    elif(next_step()): #if there is next step
+        continue_recipe()
+    else:
+        output_response()
         
-        elif match_kgs:
-            amount = match_kgs.group(1)
-            amount_in_kgs = convert_to_decimal(amount)
-            amount_in_grams = amount_in_kgs * 1000
-        
-        elif match_lb:
-            amount = match_lb.group(1)
-            amount_in_lb = convert_to_decimal(amount)
-            amount_in_grams = amount_in_lb * 453.592
-        
-        if match_grams or match_kgs or match_lb:
-            # Don't need to create thread because it shouldn't be running in background, assistant should wait until the weight is accurate before proceeding to next step
-            # Display a screen that outputs weight?
-            monitorScale(amount_in_grams, amount_in_lb)
-        else: return None
-        
-        
-
-    return None
-
-# Sample usage
-sentences = parser(text)
-for i in range(len(sentences)):
-    if checktime(sentences):
-        checktemp(sentences)
-    scale(sentences)
-    time.sleep(10)
+    
+    #audio out
+    
+    
