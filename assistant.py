@@ -2,6 +2,7 @@ import re
 import time
 import threading
 import queue
+from pi import *
 
 class assistant: 
     static_timer = False  # global static context variables
@@ -93,22 +94,6 @@ def checktemp(text):
                 return temperature    
     return None
 
-def monitorTemp(target_temp, required_duration):
-    def temperature_check():
-        # Wait until the correct temperature is reached before starting timer
-        while True:
-            current_temperature = 3 # CHANGE!!! Connect to temperature sensor
-            if current_temperature >= target_temp:
-                break
-            time.sleep(5)
-        
-        # Timer
-        for remaining in range(required_duration, 0, -1):
-            time.sleep(1)
-        
-    temp_thread = threading.Thread(target=temperature_check)
-    temp_thread.daemon = True
-    temp_thread.start()
 
 
 
@@ -133,7 +118,13 @@ def scale(text):
             amount = match_lb.group(1)
             amount_in_lb = convert_to_decimal(amount)
             amount_in_grams = amount_in_lb * 453.592
-
+        
+        if match_grams or match_kgs or match_lb:
+            # Don't need to create thread because it shouldn't be running in background, assistant should wait until the weight is accurate before proceeding to next step
+            # Display a screen that outputs weight?
+            monitorScale(amount_in_grams, amount_in_lb)
+        else: return None
+        
         
 
     return None
