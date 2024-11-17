@@ -1,7 +1,20 @@
 import requests
 from datasets import Dataset
 import json
+from unsloth import FastLanguageModel
 import time
+
+max_seq_length = 2048 # Choose any! We auto support RoPE Scaling internally!
+dtype = None # None for auto detection. Float16 for Tesla T4, V100, Bfloat16 for Ampere+
+load_in_4bit = True # Use 4bit quantization to reduce memory usage. Can be False.
+
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name = "unsloth/Meta-Llama-3.1-8B",
+    max_seq_length = max_seq_length,
+    dtype = dtype,
+    load_in_4bit = load_in_4bit,
+    # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
+)
 
 # Define the prompt template
 meal_prompt_template = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
@@ -29,6 +42,7 @@ def fetch_meal_data(num_meals=10000):
 
     return meals
 
+EOS_TOKEN = tokenizer.eos_token # Must add EOS_TOKEN
 # Define a function to format the data
 def format_meal_data_for_prompt(meals):
     examples = []
@@ -38,8 +52,8 @@ def format_meal_data_for_prompt(meals):
         output_response = f"Ingredients: {meal['strIngredient1']}, {meal['strIngredient2']}, ...\nInstructions: {meal['strInstructions']}"
 
         # Format with prompt template and add EOS token
-        text = meal_prompt_template.format(instruction, input_context, output_response) + "<|endoftext|>"  # EOS token
-        examples.append({"instruction": instruction, "input": input_context, "output": output_response, "text": text})
+        text = meal_prompt_template.format(instruction, input_context, output_response) + EOS_TOKEN
+        examples.append(text)
     return examples
 
 # Fetch and format the data
