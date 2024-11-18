@@ -1,37 +1,4 @@
 import re
-import time
-import threading
-import queue
-
-class assistant: 
-    static_timer = False  # global static context variables
-    static_scale = False
-    static_audio = False
-
-    @classmethod
-    def interrupt_timer(cls):  #need to change using queue
-        while assistant.static_audio:  # So two instructions are not at the same time
-            time.sleep(5)  
-
-        assistant.static_timer = False
-
-    @classmethod
-    def start_timer(cls, seconds):
-        assistant.static_timer = True
-        print(f"Timer started for {seconds} seconds.")
-        time.sleep(seconds)  # Sleep for the given number of seconds
-
-    @classmethod
-    def run_timer(cls, seconds):
-        timer_thread = threading.Thread(target=assistant.start_timer, args=(seconds,))
-        timer_thread.daemon = True  # low priority thread
-        timer_thread.start()
-        time
-
-# Sample text
-text = """
-Preheat the oven to 180°C for 5 seconds.
-"""
 
 # Parses LLM Instructions for recipe
 def parser(text):
@@ -93,24 +60,6 @@ def checktemp(text):
                 return temperature    
     return None
 
-def monitorTemp(target_temp, required_duration):
-    def temperature_check():
-        # Wait until the correct temperature is reached before starting timer
-        while True:
-            current_temperature = 3 # CHANGE!!! Connect to temperature sensor
-            if current_temperature >= target_temp:
-                break
-            time.sleep(5)
-        
-        # Timer
-        for remaining in range(required_duration, 0, -1):
-            time.sleep(1)
-        
-    temp_thread = threading.Thread(target=temperature_check)
-    temp_thread.daemon = True
-    temp_thread.start()
-
-
 
 def scale(text):
     for sentence in text:
@@ -133,15 +82,5 @@ def scale(text):
             amount = match_lb.group(1)
             amount_in_lb = convert_to_decimal(amount)
             amount_in_grams = amount_in_lb * 453.592
-
-        
-
     return None
 
-# Sample usage
-sentences = parser(text)
-for i in range(len(sentences)):
-    if checktime(sentences):
-        checktemp(sentences)
-    scale(sentences)
-    time.sleep(10)
