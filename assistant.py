@@ -12,6 +12,7 @@ class assistant:
     static_temp = False
     static_temp_value = 0
     static_on = True
+    STATIC_GAS_THRESHOLD = 2.5
     
     @classmethod
     def interrupt_timer(cls):  #need to change using queue

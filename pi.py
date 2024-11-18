@@ -32,4 +32,17 @@ def monitorScale(target_weight, lbs):
     temp_thread = threading.Thread(target=scale_check)
     temp_thread.daemon = True
     temp_thread.start()
-    
+
+def monitorGas(threshold_voltage):
+    def gas_check():
+      while True:
+        current_voltage = 3 # CHANGE!!!
+        if (current_voltage >= threshold_voltage):
+          # STOP PROGRAM, OR INFORM USER, WARNING
+          break
+        time.sleep(0.01)
+    temp_thread = threading.Thread(target=gas_check)
+    temp_thread.daemon = True
+    temp_thread.start()
+          
+            
