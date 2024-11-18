@@ -45,4 +45,8 @@ def monitorGas(threshold_voltage):
     temp_thread.daemon = True
     temp_thread.start()
           
-            
+def microphoneOn():
+   def check_mic():
+      while True:
+         
+        
