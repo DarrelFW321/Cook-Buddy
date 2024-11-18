@@ -46,11 +46,8 @@ def output_response(index=-1):
         print(instruction.static_current_instruction)  # Currently printing but should be sent to Pi
     elif index == -2:
         print("Do you want to stop the current recipe?")  # Currently printing but should be sent to Pi
-    else:
-        if 0 <= instruction.static_recipe_index < len(instruction.static_current_recipe):
-            print(instruction.static_current_recipe[instruction.static_recipe_index])  # Currently printing but should be sent to Pi
-        else:
-            print("Invalid recipe index.")  # Debug
+
+     
 
 def start_recipe(response):
     instruction.static_recipe_index = 0
@@ -66,13 +63,11 @@ def continue_recipe():
     if instruction.static_recipe_index + 1 >= len(instruction.static_current_recipe):
         instruction.static_current_recipe = []
         instruction.static_recipe_index = 0
-        instruction.static_current_instruction = ""
+        instruction.static_current_instruction = send_LLM_instruction(audio)
         instruction.static_recipe = False
-        print("Recipe completed.")  # Debug
     else:
         instruction.static_recipe_index += 1
         instruction.static_current_instruction = instruction.static_current_recipe[instruction.static_recipe_index]
-        output_response()
         
         
 def send_LLM(audio):
@@ -101,7 +96,7 @@ while assistant.static_on:
     if instruction.static_recipe_query:
         if input_type == "recipe":
             if instruction.static_recipe:
-                output_response(-2)
+                instruction.static_current_instruction = "Do you want to stop the current recipe?"
             else:
                 response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
                 start_recipe(response)
