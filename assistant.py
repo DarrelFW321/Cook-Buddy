@@ -12,6 +12,8 @@ class assistant:
     static_temp = False
     static_temp_value = 0
     static_on = True
+    STATIC_GAS_THRESHOLD = 2.5
+
     
     @classmethod
     def interrupt_timer(cls):  #need to change using queue
@@ -39,26 +41,37 @@ class instruction:
     static_current_recipe=[]
     static_recipe_index = 0
     static_interrupt = False
+    static_current_instruction = ""
+    
+    
+def output_response(instruct=[],index= -1){
+    if (index == -1):
+        
+    else:
+        print()
+}
     
 def start_recipe():
-    LLM_out = send_LLML(audio)
-    static_current_recipe = LLM_out.split()
-    output_response(instruction.static_recipe, instruction.static_)
-
-
-
-
+    LLM_out = send_LLM(audio)
+    
+    
 
 #main loop
 while(assistant.static_on):
+    instruction.static_current_instruction = ""
+    
     #receive mic audio
+    #stt the audio
+    audio = ... #placeholder for stt
     
-    #stt (receive instruction)
+    response = send_LLM(audio) #send to llm user input, get response back
     
-    #send to llm
+    if (parse.parseType(audio)):
+        instruction.static_recipe_query = True
+    else: instruction.static_current_instruction = response 
     
-    if(assistant.static_recipe_query): #if asks anything regarding recipe ( )
-        if (assistant.recipe):
+    if(instruction.static_recipe_query): #if asks anything regarding recipe 
+        if (instruction.static_recipe):
             new_recipe_query()
             if(next_step()):
                 continue_recipe()
@@ -69,9 +82,8 @@ while(assistant.static_on):
     elif(next_step()): #if there is next step
         continue_recipe()
     else:
-        output_response()
-        
+        output_response([instruction.static_current_instruction])
     
-    #audio out
+    
     
     
