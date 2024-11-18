@@ -6,6 +6,26 @@ def parser(text):
     sentences = [sentence.strip() for sentence in sentences if sentence]
     return sentences
 
+# Parse type of instruction
+def parse_type(text):
+    sentences = parser(text)
+    if re.search(r'\bdone\b', sentences[0].lower()):
+        return "done"
+    
+    if re.search(r'\bthis is a recipe\b', sentences[0].lower()):
+        return "recipe"
+    
+    return None
+
+#Parse actual instruction
+def parse_instruction(text):
+    match = re.search(r'Instructions:\s*\[(.*?)\]', text)
+    if match:
+        instructions_text = match.group(1)
+        instructions = re.findall(r'"(.*?)"', instructions_text)
+
+    return instructions
+    
 # Handles fractional values
 def convert_to_decimal(value):
     if value is None: return 0.0
