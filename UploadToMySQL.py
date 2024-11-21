@@ -16,6 +16,48 @@ try:
     connection = mysql.connector.connect(**db_config)
     print("Connected successfully!")
 except mysql.connector.Error as err:
+    print(f"Error: {err}")
+
+# Example: Insert data into a table
+try:
+    cursor.execute("INSERT INTO your_table_name (column1, column2) VALUES (%s, %s)", ("value1", "value2"))
+    connection.commit()  # Commit the transaction
+    print("Data inserted successfully!")
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+
+# Example: Fetch data from a table
+try:
+    cursor.execute("SELECT * FROM your_table_name")
+    results = cursor.fetchall()  # Fetch all rows
+    for row in results:
+        print(row)
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+
+cursor.close()
+connection.close()
+
+
+
+"""
+import mysql.connector
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+}
+
+try:
+    print("Starting connection...")
+    connection = mysql.connector.connect(**db_config)
+    print("Connected successfully!")
+except mysql.connector.Error as err:
     print(f"MySQL Error: {err}")
 except Exception as e:
     print(f"Unexpected Error: {e}")
@@ -48,3 +90,4 @@ finally:
 #         cursor.close()
 #         connection.close()
 #         print("Connection closed.")
+"""
