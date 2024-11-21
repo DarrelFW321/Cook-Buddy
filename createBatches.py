@@ -25,6 +25,7 @@ systemMessage = "For each recipe name reply with 1 word for each in format: Cuis
 inputString = ""
 
 curBatchNum = 0
+os.makedirs('batchFiles', exist_ok=True)
 currentFile = open(f"batchFiles/batch_{curBatchNum}.jsonl", 'w')
 curBatchNum += 1
 encoding = tiktoken.encoding_for_model("gpt-4o-mini")
