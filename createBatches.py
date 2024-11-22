@@ -12,6 +12,9 @@ import re
 import csv
 
 
+
+
+
 recsPerRequest = 100      # customize
 requestsPerBatch = 50000    # customize
 recsPerBatch = recsPerRequest * requestsPerBatch
@@ -42,7 +45,6 @@ requestNum = 0
 posAdjust = 0
 recipeInReqIndex = 0
 
-os.makedirs("batchFiles", exist_ok=True)
 nextStart = open(f"batchFiles/nextStart.txt", 'w')
 for i, recipe in csvReader.iterrows():
     curName = recipe[1] 
