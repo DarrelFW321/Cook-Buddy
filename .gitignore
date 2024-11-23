@@ -2,3 +2,5 @@ Recipe_Database/
 .venv/
 .env
 *datasettest/
+batchFilesTest/
+batchFilesOld/

@@ -3,9 +3,8 @@ import dotenv
 import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
-key1or2 = 2
+key1or2 = 1   # 2 is anand
 batchNum = 1
-
 
 dotenv.load_dotenv()
 api_key = os.getenv(f"API_KEY{key1or2}")
@@ -15,7 +14,7 @@ client = openai.OpenAI(api_key=api_key)
 
 
 batch_file = client.files.create(
-  file=open(f"batchFiles/batch_{batchNum}.jsonl", "rb"),
+  file=open(f"batchFilesNew/batch_{batchNum}.jsonl", "rb"),
   purpose="batch"
 )
 
@@ -25,8 +24,10 @@ batch_job = client.batches.create(
   completion_window="24h"
 )
 
-batchIDFile = open(f"batchIDs", 'a')
-batchIDFile.write(f"batch_{batchNum}: {batch_file.id}\n")
+os.makedirs('retrievedBatchesNew', exist_ok=True)
+
+batchIDFile = open(f"retrievedBatchesNew/submittedBatchIDs", 'a')
+batchIDFile.write(f"batch_{batchNum}: {batch_job.id}\n")
 batchIDFile.close()
 
 print(batch_job)
