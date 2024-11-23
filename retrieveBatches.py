@@ -4,7 +4,7 @@ import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
 key1or2 = 1   # 2 is anand
-batchNum = 1
+batchNum = 3
 
 dotenv.load_dotenv()
 api_key = os.getenv(f"API_KEY{key1or2}")
@@ -25,7 +25,6 @@ with open("retrievedBatchesNew/submittedBatchIDs", "r") as batchIDFile:
     print(batch.status)
     if (batch.status == "completed"):
         batchOutput = client.files.content(batch.output_file_id).content
-        batchResultFile = open(f"retrievedBatchesNew/batch_{batchNum}_output.jsonl", "w")
+        batchResultFile = open(f"retrievedBatchesNew/batch_{batchNum}_output.jsonl", "wb")
         batchResultFile.write(batchOutput)
         batchResultFile.close()
-        

@@ -4,7 +4,7 @@ import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
 key1or2 = 1   # 2 is anand
-batchNum = 1
+batchNum = 3
 
 dotenv.load_dotenv()
 api_key = os.getenv(f"API_KEY{key1or2}")
@@ -27,7 +27,7 @@ batch_job = client.batches.create(
 os.makedirs('retrievedBatchesNew', exist_ok=True)
 
 batchIDFile = open(f"retrievedBatchesNew/submittedBatchIDs", 'a')
-batchIDFile.write(f"batch_{batchNum}: {batch_job.id}\n")
+batchIDFile.write(f"Key {key1or2} batch_{batchNum}: {batch_job.id}\n")
 batchIDFile.close()
 
 print(batch_job)
