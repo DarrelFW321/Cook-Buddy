@@ -3,8 +3,8 @@ import dotenv
 import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
-key1or2 = 1   # 2 is anand
-batchNum = 3
+key1or2 = 2   # 2 is anand
+batchNum = 123456789
 
 dotenv.load_dotenv()
 api_key = os.getenv(f"API_KEY{key1or2}")
