@@ -4,7 +4,7 @@ import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
 key1or2 = 2   # 2 is anand
-batchNum = 123456789
+batchNum = 9
 
 dotenv.load_dotenv()
 api_key = os.getenv(f"API_KEY{key1or2}")
