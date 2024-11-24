@@ -87,4 +87,14 @@ import os
 import dotenv
 tkn = os.getenv("HUG_API")
 model.push_to_hub("allenyang687/cookbuddymodel", token = tkn) # Online saving
-tokenizer.push_to_hub("allenyang687/ookbuddymodel", token = tkn) # Online saving
+tokenizer.push_to_hub("allenyang687/cookbuddymodel", token = tkn) # Online saving
+
+if False:
+    from unsloth import FastLanguageModel
+    model, tokenizer = FastLanguageModel.from_pretrained(
+        model_name = "allenyang687/cookbuddymodel", 
+        max_seq_length = max_seq_length,
+        dtype = dtype,
+        load_in_4bit = load_in_4bit,
+    )
+    FastLanguageModel.for_inference(model) # Enable native 2x faster inference
