@@ -1,6 +1,7 @@
 import threading
 import time
 import parse
+import main
 
 class assistant: 
     static_timer = False  # global static context variables
@@ -10,7 +11,6 @@ class assistant:
     static_temp = False
     static_temp_value = 0
     static_on = True
-    STATIC_GAS_THRESHOLD = 2.5
 
     @classmethod
     def interrupt_timer(cls):  # Need to change using queue
@@ -76,7 +76,7 @@ text1 = "This Is a recipe"
 text2 = """Ingredients: ["1 large whole chicken", "2 (10 1/2 oz.) cans chicken gravy", "1 (10 1/2 oz.) can cream of mushroom soup", "1 (6 oz.) box Stove Top stuffing", "4 oz. shredded cheese"], Instructions: ["Boil and debone chicken.", "Put bite size pieces in average size square casserole dish.", "Pour gravy and cream of mushroom soup over chicken; level.", "Make stuffing according to instructions on box (do not make too moist).", "Put stuffing on top of chicken and gravy; level.", "Sprinkle shredded cheese on top and bake at 350\u00b0 for approximately 20 minutes or until golden and bubbly."], Course Type:  Main
 """
 
-def main():
+def main(sensor_data):
     while assistant.static_on:
         instruction.static_current_instruction = ""
         instruction.static_recipe_query = False
