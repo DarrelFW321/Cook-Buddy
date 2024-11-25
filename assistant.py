@@ -1,7 +1,5 @@
-import re
 import threading
 import time
-import queue
 import parse
 
 class assistant: 
@@ -41,10 +39,10 @@ class instruction:
     static_interrupt = False
     static_current_instruction = ""
     
-def output_response(index=-1):
-    if index == -1:
+def output_response(index=1):
+    if index == 1:
         print(instruction.static_current_instruction)  # Currently printing but should be sent to Pi
-    elif index == -2:
+    elif index == 2:
         print("Do you want to stop the current recipe?")  # Currently printing but should be sent to Pi
 
      
@@ -78,30 +76,41 @@ text1 = "This Is a recipe"
 text2 = """Ingredients: ["1 large whole chicken", "2 (10 1/2 oz.) cans chicken gravy", "1 (10 1/2 oz.) can cream of mushroom soup", "1 (6 oz.) box Stove Top stuffing", "4 oz. shredded cheese"], Instructions: ["Boil and debone chicken.", "Put bite size pieces in average size square casserole dish.", "Pour gravy and cream of mushroom soup over chicken; level.", "Make stuffing according to instructions on box (do not make too moist).", "Put stuffing on top of chicken and gravy; level.", "Sprinkle shredded cheese on top and bake at 350\u00b0 for approximately 20 minutes or until golden and bubbly."], Course Type:  Main
 """
 
-# Main loop
-while assistant.static_on:
-    instruction.static_current_instruction = ""
-    instruction.static_recipe_query = False
-    
-    # Placeholder for receiving and processing mic audio
-    audio = ...  # Placeholder for STT (speech-to-text)
-    
-    response = send_LLM(audio)  # Send user input to LLM and get response
-    input_type = parse.parse_type(response)
-    
-    if input_type:
-        instruction.static_recipe_query = True  # If "done" or "this is a recipe"
-    
-    if instruction.static_recipe_query:
-        if input_type == "recipe":
-            if instruction.static_recipe:
-                instruction.static_current_instruction = "Do you want to stop the current recipe?"
+def main():
+    while assistant.static_on:
+        instruction.static_current_instruction = ""
+        instruction.static_recipe_query = False
+        
+        # Placeholder for receiving and processing mic audio
+        audio = ...  # Placeholder for STT (speech-to-text)
+        
+        response = send_LLM(audio)  # Send user input to LLM and get response
+        input_type = parse.parse_type(response)
+        
+        if input_type:
+            instruction.static_recipe_query = True  # If "done" or "this is a recipe"
+        
+        if instruction.static_new_recipe: #do you want to start for new
+            instruction.static_new_recipe = False
+            response = send_LLM_instruction(audio)
+            start_recipe(response)
+            output_response(1)
+
+        elif instruction.static_recipe_query:
+            if input_type == "recipe":
+                if instruction.static_recipe:
+                    instruction.static_current_instruction = "Do you want to stop the current recipe?"
+                    instruction.static_new_recipe = True
+                    output_response(2)
+                else:
+                    response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
+                    start_recipe(response)
+                    output_response(1)
             else:
-                response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
-                start_recipe(response)
+                continue_recipe()
+                output_response(1)
         else:
-            continue_recipe()
-    else:
-        response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
-        instruction.static_current_instruction = response
+            response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
+            instruction.static_current_instruction = response
+            output_response(1)
     
