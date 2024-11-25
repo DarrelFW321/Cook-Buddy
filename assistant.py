@@ -55,7 +55,6 @@ def start_recipe(response):
     instruction.static_current_recipe = parse.parse_instruction(response)
     if instruction.static_current_recipe:  # Ensure there's at least one instruction
         instruction.static_current_instruction = instruction.static_current_recipe[0]
-        output_response()
     else:
         print("No valid recipe instructions found.")  # Debug
 
@@ -105,5 +104,4 @@ while assistant.static_on:
     else:
         response = send_LLM_instruction(audio)  # Send actual instruction to LLM and get response
         instruction.static_current_instruction = response
-        output_response(-1)
     
