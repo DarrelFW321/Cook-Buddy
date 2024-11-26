@@ -83,7 +83,7 @@ def checktemp(sentence):
 
 def scale(sentence):
     sentence.lower()
-    match_grams = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(gram|grams)', sentence)
+    match_grams = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(gram|grams|g)', sentence)
     match_kgs = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(kg|kgs)', sentence)
     match_lb = re.search(r'(\d+/\d+|\d+\.\d+|\d+)\s*(lb|lbs)', sentence)
     amount_in_grams = 0
@@ -108,3 +108,37 @@ def scale(sentence):
             
     return None
 
+
+def main():
+    # Sample output from ChatGPT
+    # Input: Give me a pasta recipe where each instruction is separated by %%%, and only give me instructions, no ingredients, etc. Indent each new instruction without the instruction number. Specify temperature and weights needed
+    text = """Bring 4 liters of salted water to a boil over high heat (about 212°F/100°C). %%%
+    Cook 200g of pasta until al dente, following the package instructions (usually about 8-10 minutes). %%%
+    Drain the pasta and reserve 120ml of pasta water. %%%
+    Heat 30ml of olive oil in a skillet over medium heat (around 300°F/150°C). %%%
+    Add 4 minced garlic cloves and sauté for 1-2 minutes until fragrant. %%%
+    Add 1/4 teaspoon of chili flakes and stir for 30 seconds. %%%
+    Toss the cooked pasta into the skillet and mix well for 1-2 minutes. %%%
+    Stir in the reserved 120ml of pasta water to loosen the sauce. %%%
+    Season with salt and pepper to taste. %%%
+    Garnish with 30g of grated Parmesan and fresh parsley before serving."""
+    texts = parser(text)
+    print(texts)
+    print("\n")
+    for cur in texts:
+        print(scale(cur))
+        # checktemp(cur)
+        # print(parse_time(cur))
+        # checktime(cur)
+        # print(checktime(cur))
+    # print("\n")
+    # print(checktime(texts))
+    # print("\n")
+    # print(parse_time(texts))
+    # print("\n")
+    # print(checktemp(texts))
+    # print("\n")
+    # print(scale(texts))
+    
+
+main()
