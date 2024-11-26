@@ -2,9 +2,11 @@ import re
 
 # Parses LLM Instructions for recipe
 def parser(text):
-    sentences = re.split(r'[.\n]', text)
+    sentences = re.split(r'[%%%\n]', text)
     sentences = [sentence.strip() for sentence in sentences if sentence]
     return sentences
+
+# "Give me a pasta recipe where each instruction is separated by %%%, and only give me instructions, no ingredients, etc. Indent each new instruction without the instruction number"
 
 # Parse type of instruction
 def parse_type(text):
