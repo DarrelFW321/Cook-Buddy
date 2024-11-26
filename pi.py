@@ -1,12 +1,52 @@
-from assistant import *
+import time
+import threading
+import paramiko
+import json
 
-def monitorTemp(target_temp, required_duration):
-    assistant.assistant.static_temp = True
+class sensor:
+    input 
+    
+    output = {
+        'temperature' : None,
+        'scale_level': None,
+        'audio_out' : False,
+        
+    }
+    temp_detect = True
+    temp_goal = None
+    temp_level = None
+    scale_detect = True
+    scale_goal = None
+    scale_goal = None
+    audio_out = False
+    audio_in = None
+    gas_detect = False
+    co_level = None
+    methane_level = None
+    lpg_level = None
+        
+    class gas_type:
+        CO_THRESHOLD = 50      # Carbon Monoxide threshold in ppm (OSHA 8-hour limit)
+        METHANE_THRESHOLD = 10000  # Methane threshold in ppm (1% or 10,000 ppm)
+        LPG_THRESHOLD = 18000    # LPG threshold in ppm (1.8% or 18,000 ppm)
+
+        @staticmethod
+        def check_gas_level(gas_value, gas_type):
+            """Check the gas level against the threshold for the given gas type."""
+            if gas_value >= gas_type:
+                return f"Dangerous gas level detected! ({gas_value} ppm)"
+            else:
+                return f"Gas level is safe. ({gas_value} ppm)"
+    
+
+
+def monitorTemp(required_duration):
+    sensor.temp_detect = True
     def temperature_check():
         # Wait until the correct temperature is reached before starting timer
         while True:
-            current_temperature = 3 # CHANGE!!! Connect to temperature sensor
-            if current_temperature >= target_temp:
+            sensor.temp_level =  # CHANGE!!! Connect to temperature sensor
+            if sensor.temp_level >= sensor.temp_goal:
                 break
             time.sleep(5)
         
@@ -17,16 +57,16 @@ def monitorTemp(target_temp, required_duration):
     temp_thread = threading.Thread(target=temperature_check)
     temp_thread.daemon = True
     temp_thread.start()
-    assistant.assistant.static_temp = False
+    sensor.temp_detect = False
 
 # target_weight and lbs are for displaying the weight real-time
 def monitorScale(target_weight, lbs):
-    assistant.assistant.static_scale = True
+    sensor.scale_detect= True
     def scale_check():
-      while assistant.assistant.static_scale:
+      while sensor.scale_detect:
         current_weight = 3 # CHANGE!!
         if (abs(current_weight - target_weight)) < 1:
-            assistant.assistant.static_scale = False
+            sensor.scale_detect = False
             
         time.sleep(0.01)
     temp_thread = threading.Thread(target=scale_check)
@@ -45,8 +85,4 @@ def monitorGas(threshold_voltage):
     temp_thread.daemon = True
     temp_thread.start()
           
-def microphoneOn():
-   def check_mic():
-      while True:
-         
-        
+            
