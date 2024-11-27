@@ -2,3 +2,4 @@ Recipe_Database/
 .venv/
 .env
 *datasettest/
+serviceAccKey.json
