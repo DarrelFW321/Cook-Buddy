@@ -1,7 +1,59 @@
 import threading
 import time
 import parse
-import main
+import requests  # For HTTP communication
+import json
+
+# Replace this with the Raspberry Pi's IP
+PI_IP = "192.168.1.100"  # Change to your Pi's IP
+PI_PORT = 5000
+
+def fetch_audio_from_pi():
+    """Fetch audio file from the Pi."""
+    url = f"http://{PI_IP}:{PI_PORT}/audio"
+    try:
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(SAVE_PATH, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=1024):
+                    f.write(chunk)
+            print(f"Audio file received and saved to {SAVE_PATH}")
+        else:
+            print(f"Failed to fetch audio: {response.status_code}, {response.json()}")
+    except Exception as e:
+        print(f"Error fetching audio: {e}")
+
+def send_instruction_to_pi(instruction, audio_file=None):
+    """Send instruction and audio file to the Pi."""
+    url = f"http://{PI_IP}:{PI_PORT}/instruction"
+    payload = {
+        "instruction": instruction,
+    }
+    files = {'audio_file': audio_file} if audio_file else None
+    try:
+        if files:
+            response = requests.post(url, data=payload, files=files)
+        else:
+            response = requests.post(url, json=payload)
+        print(f"Instruction sent. Response: {response.json()}")
+    except Exception as e:
+        print(f"Error sending instruction: {e}")
+
+def fetch_sensor_data_from_pi():
+    """Fetch sensor data from the Pi."""
+    url = f"http://{PI_IP}:{PI_PORT}/sensor"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Sensor data received: {data}")
+            return data
+        else:
+            print(f"Failed to fetch sensor data: {response.status_code}")
+    except Exception as e:
+        print(f"Error fetching sensor data: {e}")
+    return {}
+
 
 class assistant: 
     static_timer = False  # global static context variables
@@ -10,13 +62,7 @@ class assistant:
     static_audio = False
     static_temp = False
     static_temp_value = 0
-    static_on = True
-
-    @classmethod
-    def interrupt_timer(cls):  # Need to change using queue
-        while cls.static_audio:  # Prevents concurrent instructions
-            time.sleep(5)  
-        cls.static_timer = False
+    static_on = True    
 
     @classmethod
     def start_timer(cls, seconds):
@@ -46,7 +92,6 @@ def output_response(index=1):
         print("Do you want to stop the current recipe?")  # Currently printing but should be sent to Pi
 
      
-
 def start_recipe(response):
     instruction.static_recipe_index = 0
     instruction.static_recipe = True
