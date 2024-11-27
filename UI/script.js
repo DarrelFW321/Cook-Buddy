@@ -22,33 +22,6 @@ const opts = {
   amp: 1,
 };
 
-// Interactive dat.GUI controls
-const gui = new dat.GUI();
-
-// hide them by default
-gui.close();
-
-// connect gui to opts
-gui.addColor(opts, "color1");
-gui.addColor(opts, "color2");
-gui.addColor(opts, "color3");
-gui.add(opts, "fillOpacity", 0, 1);
-gui.add(opts, "lineWidth", 0, 10).step(1);
-gui.add(opts, "glow", 0, 100);
-gui.add(opts, "blend", [
-  "normal",
-  "multiply",
-  "screen",
-  "overlay",
-  "lighten",
-  "difference",
-]);
-gui.add(opts, "smoothing", 0, 1);
-gui.add(opts, "minDecibels", -100, 0);
-gui.add(opts, "amp", 0, 5);
-gui.add(opts, "width", 0, 60);
-gui.add(opts, "shift", 0, 200);
-
 let context;
 let analyser;
 
