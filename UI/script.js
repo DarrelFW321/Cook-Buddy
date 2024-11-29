@@ -220,3 +220,12 @@ function start() {
   document.querySelector("button").remove();
   navigator.getUserMedia({ audio: true }, onStream, onStreamError);
 }
+
+// Connect to the WebSocket server
+const socket = io.connect("http://localhost:5000");
+
+// Listen for real-time updates
+socket.on("update", (data) => {
+  console.log("Real-time update received:", data);
+  document.getElementById("output").innerText = data.data;
+});
