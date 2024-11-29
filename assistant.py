@@ -15,7 +15,7 @@ def UI():
 
 @socketio.on("connect")
 def on_connect():
-    print("Clint connected!")
+    print("Client connected!")
 
 @socketio.on("message")
 def handle_message(data):
