@@ -4,3 +4,4 @@ Recipe_Database/
 *datasettest/
 node_modules/
 package-lock.json
+serviceAccKey.json
