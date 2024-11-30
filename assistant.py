@@ -3,9 +3,11 @@ import requests
 import os
 
 # Replace this with the Raspberry Pi's IP
-PI_IP = "192.168.1.100"
+PI_IP = "192.168.175.62"
 PI_PORT = 5000  
-SAVE_PATH = "/path/to/save/audio"  
+SAVE_PATH = "./uploads"  
+
+text = """["Cook spaghetti according to package directions.", "Meanwhile, in a large skillet, heat oil over medium heat. Add garlic and cook 1 minute. Add tomatoes and parsley and cook 5 minutes or until tomatoes are softened.", "Drain spaghetti and transfer to a large serving bowl. Add tomato mixture and Parmesan cheese and toss to combine."]"""
 
 def fetch_audio_from_pi():
     """Fetch audio file from the Pi."""

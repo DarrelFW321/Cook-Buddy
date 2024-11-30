@@ -9,6 +9,7 @@ app = Flask(__name__)
 
 # Define the instruction queue globally
 instruction_queue = queue.Queue()
+instruction_data = None
 
 # Paths and thresholds
 AUDIO_FILE_PATH = "test_audio.mp3"  # Set the path for the audio file
@@ -24,16 +25,18 @@ ALERT_SOUNDS = {
     "temperature": "temperature_alert.mp3",  # File path to temperature alert sound
     "co": "co_alert.mp3",                    # File path to CO alert sound
     "methane": "methane_alert.mp3",          # File path to methane alert sound
-    "lpg": "lpg_alert.mp3"                   # File path to LPG alert sound
+    "lpg": "lpg_alert.mp3" ,                  # File path to LPG alert sound
+    "timer":"timer.mp3",                    # File path to timer aler sound
+    "scale" :"scale_alert.mp3"
 }
 
 # State variables for sensors
 sensor_data = {
-    "temperature": 0,  # Mock temperature, replace with actual sensor data
-    "scale_level": 0,   # Mock scale level
-    "co_level": 0,      # Mock CO level
-    "methane_level": 0, # Mock methane level
-    "lpg_level": 0,     # Mock LPG level
+    "temperature": None,  # Mock temperature, replace with actual sensor data
+    "scale_level": None,   # Mock scale level
+    "co_level": None,      # Mock CO level
+    "methane_level": None, # Mock methane level
+    "lpg_level": None,     # Mock LPG level
 }
 
 # Threshold goals for sensors
@@ -42,16 +45,25 @@ threshold_goals = {
     "scale_goal": None
 }
 
-# Thread-safe flags for status
-flags = {
-    "timer_active": False,
-    "alert_active": False,
-}
-
 # Lock for sensor data and instruction queue
 sensor_lock = threading.Lock()
 instruction_queue_lock = threading.Lock()
 
+sensor_flags = {
+    "temperature" : False,
+    "scale" : False
+}
+
+
+# Boolean flags to control output of temperature, scale, and timer alerts
+alert_flags = {
+    "temperature_alert": False,
+    "scale_alert": False,
+    "timer_alert": False
+}
+
+# Event to stop threads if a gas alert occurs
+stop_threads_event = threading.Event()
 
 # -------- Flask Endpoints -------- #
 
@@ -61,9 +73,7 @@ def receive_instruction():
     try:
         data = request.form if request.form else request.json
         
-        # Create the instruction_data dictionary (without unnecessary fields like alert_message)
         instruction_data = {
-            "instruction": data.get("instruction", ""),
             "send_audio": data.get("send_audio", False),
             "set_timer": data.get("set_timer", False),
             "timer_duration": data.get("timer_duration", 0),
@@ -71,7 +81,6 @@ def receive_instruction():
             "temperature_goal": data.get("temperature_goal", None),
             "set_scale": data.get("set_scale", False),
             "scale_goal": data.get("scale_goal", None),
-            "alert": data.get("alert", False),  # You may keep this if you want to handle alerts
         }
 
         # Handle setting temperature goal if requested
@@ -92,14 +101,10 @@ def receive_instruction():
             audio_file.save(AUDIO_FILE_PATH)
             instruction_data["audio_file"] = AUDIO_FILE_PATH
             print(f"Audio file saved to {AUDIO_FILE_PATH}")
-
-        return jsonify({"status": "Instruction received", "data": instruction_data}), 200
+            instruction_queue.put({"type": "instruction"})
 
     except Exception as e:
         print(f"Error receiving instruction: {e}")
-        return jsonify({"error": "Failed to receive instruction"}), 500
-
-
 
 @app.route('/audio', methods=['GET'])
 def send_audio_file():
@@ -109,7 +114,6 @@ def send_audio_file():
     else:
         return jsonify({"error": "Audio file not found"}), 404
 
-
 # -------- Beep Function -------- #
 
 def beep(alert_type):
@@ -118,99 +122,117 @@ def beep(alert_type):
         sound_file = ALERT_SOUNDS[alert_type]
         playsound(sound_file)
 
-
 # -------- Monitor Sensors -------- #
 
 def monitor_sensors():
     """Monitor sensors and trigger appropriate alerts."""
     while True:
+        if stop_threads_event.is_set():
+            break  # Stop monitoring if gas alert has been triggered
+
         with sensor_lock:
-            temp = sensor_data["temperature"]
-            scale = sensor_data["scale_level"]
+            if (sensor_flags["temperature"]):
+                temp = sensor_data["temperature"]
+            if (sensor_flags["scale"]):
+                scale = sensor_data["scale_level"]
             co = sensor_data["co_level"]
             methane = sensor_data["methane_level"]
             lpg = sensor_data["lpg_level"]
 
         # Immediate alerts for gas levels
-        if co >= 50:  # CO Threshold
-            beep("gas_co")
-        if methane >= 10000:  # Methane Threshold
-            beep("gas_methane")
-        if lpg >= 18000:  # LPG Threshold
-            beep("gas_lpg")
+        if co >= CO_THRESHOLD:  # CO Threshold
+            beep("co")
+            stop_threads_event.set()  # Stop all threads
+            break
+        if methane >= METHANE_THRESHOLD:  # Methane Threshold
+            beep("methane")
+            stop_threads_event.set()  # Stop all threads
+            break
+        if lpg >= LPG_THRESHOLD:  # LPG Threshold
+            beep("lpg")
+            stop_threads_event.set()  # Stop all threads
+            break
         
         # Lower priority alerts, added to the queue for handling
-        if temp >= TEMP_THRESHOLD:  # Temperature Threshold
+        if temp >= TEMP_THRESHOLD and not alert_flags["temperature_alert"]:  # Temperature Threshold
+            alert_flags["temperature_alert"] = True
             instruction_queue.put({"type": "alert", "data": "Temperature alert!"})
-            reset_temperature_goal
-        if scale >= SCALE_THRESHOLD:  # Scale Threshold
+            reset_temperature_goal()
+
+        if scale >= SCALE_THRESHOLD and not alert_flags["scale_alert"]:  # Scale Threshold
+            alert_flags["scale_alert"] = True
             instruction_queue.put({"type": "alert", "data": "Scale alert!"})
-            reset_scale_goal
+            reset_scale_goal()
         
         time.sleep(0.1)  # Adjust the frequency of monitoring as needed
-
 
 # -------- Queue Processor -------- #
 
 def process_queue():
     """Process instructions and alerts in the queue."""
     while True:
+        if stop_threads_event.is_set():
+            break  # Stop processing the queue if gas alert has been triggered
+
         task = instruction_queue.get()
         
         if task["type"] == "instruction":
-            instruction = task["data"]
-            print(f"Processing instruction: {instruction}")
-            # Handle specific instructions here
-        
+            # Process the saved audio file and play sound
+            pass
         elif task["type"] == "alert":
             alert_message = task["data"]
             print(f"ALERT: {alert_message}")
             
-            if alert_message == "Temperature alert!":
+            if alert_message == "Temperature alert!" and not alert_flags["temperature_alert"]:
                 beep("temperature")
-            elif alert_message == "Scale alert!":
-                beep("scale")   
+                alert_flags["temperature_alert"] = True
+            elif alert_message == "Scale alert!" and not alert_flags["scale_alert"]:
+                beep("scale")
+                alert_flags["scale_alert"] = True
         elif task["type"] == "timer":
             duration = task["data"]
             print(f"Processing timer for {duration} seconds.")
             start_timer(duration)
         
         instruction_queue.task_done()
-        
+
 def start_timer(duration):
     """Start a timer for a given duration and notify when it finishes."""
     # Set the timer as active
-    flags["timer_active"] = True
     print(f"Timer started for {duration} seconds.")
-
     # Countdown loop
     time.sleep(duration)
-
-    # Timer is finished
-    flags["timer_active"] = False
     print(f"Timer finished after {duration} seconds.")
     
     # Play an alert sound when the timer finishes
-    beep("temperature")  # You can change this to a specific alert if you want
+    if not alert_flags["timer_alert"]:
+        beep("timer")  # You can change this to a specific alert if you want
+        alert_flags["timer_alert"] = True
 
 def set_temperature_goal(goal):
     """Set the temperature threshold goal."""
+    sensor_flags["temperature"] = True
     threshold_goals["temperature_goal"] = goal
     print(f"Temperature goal set to {goal}°C")
 
 def reset_temperature_goal():
     """Reset the temperature goal after it's reached."""
     threshold_goals["temperature_goal"] = None
+    sensor_data["temperature"] = None
+    sensor_flags["temperature"] = False
     print("Temperature goal reset.")
 
 def set_scale_goal(goal):
     """Set the scale threshold goal."""
+    sensor_flags["scale"] = True
     threshold_goals["scale_goal"] = goal
     print(f"Scale goal set to {goal}")
 
 def reset_scale_goal():
     """Reset the scale goal after it's reached."""
     threshold_goals["scale_goal"] = None
+    sensor_data["scale_level"] = None
+    sensor_flags["scale"] = False
     print("Scale goal reset.")
 
 
