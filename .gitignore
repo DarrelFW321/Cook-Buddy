@@ -3,3 +3,4 @@ Recipe_Database/
 .env
 *datasettest/
 serviceAccKey.json
+testRecordings/
