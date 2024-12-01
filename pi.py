@@ -1,7 +1,9 @@
 import time
 import threading
-import paramiko
+# import paramiko
 import json
+import wave
+import pyaudio
 
 class sensor:
     input 
@@ -43,7 +45,7 @@ def monitorTemp(required_duration):
     def temperature_check():
         # Wait until the correct temperature is reached before starting timer
         while True:
-            sensor.temp_level =  # CHANGE!!! Connect to temperature sensor
+            sensor.temp_level = 1 # CHANGE!!! Connect to temperature sensor
             if sensor.temp_level >= sensor.temp_goal:
                 break
             time.sleep(5)
@@ -82,4 +84,71 @@ def monitorGas(threshold_voltage):
     temp_thread = threading.Thread(target=gas_check)
     temp_thread.daemon = True
     temp_thread.start()
+
+
+
+# Function to record audio for 10 seconds and save as .wav file
+def record_audio(filename="audio.wav", duration=10, channels=1, rate=44100, chunk=1024):
+    """
+    Records audio from the microphone and saves it as a .wav file.
+    """
+    p = pyaudio.PyAudio()
+    
+    # Open the microphone stream
+    stream = p.open(format=pyaudio.paInt16,
+                    channels=channels,
+                    rate=rate,
+                    input=True,
+                    frames_per_buffer=chunk)
+
+    print("Recording...")
+    frames = []
+
+    # Record for the specified duration
+    start_time = time.time()
+    while time.time() - start_time <= duration:
+        data = stream.read(chunk)
+        frames.append(data)
+
+    print("Recording complete.")
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    # Save the recorded audio as a .wav file
+    with wave.open(filename, 'wb') as wf:
+        wf.setnchannels(channels)
+        wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+        wf.setframerate(rate)
+        wf.writeframes(b''.join(frames))
+    return filename
+
+def microphone_in():
+    # Thread function to handle recording and transcription
+    def listen_and_transcribe(stt_function):
+        """
+        Listens to the microphone, records audio in 10-second batches,
+        and processes it using the provided STT function.
+        """
+        output = ""
+        while True:
+            # Record audio and save as .wav
+            wav_file = record_audio()
+
+            # Pass the recorded audio file to the provided STT function
+            transcription = stt_function(wav_file)
+            if transcription == "":
+                break
+            output += transcription
+
+            # Print the transcription result
+            print(f"Transcription result: {transcription}")
+        
+        return output
+
+    # Start the listener in a new thread
+    listener_thread = threading.Thread(
+        target=listen_and_transcribe, args=(custom_stt_function), daemon=True
+    )
+    listener_thread.start()
 
