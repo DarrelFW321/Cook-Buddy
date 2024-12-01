@@ -1,9 +1,3 @@
 Recipe_Database/
 .venv/
 .env
-*datasettest/
-15datasettest/
-STL FILES/
-mydataset/
-mydataset10k/
-RecipeNLG_dataset.csv
