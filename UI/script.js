@@ -212,11 +212,10 @@ function start() {
 
 function setTimerActivity(timerActive, time) {
   if (timerActive) {
-    timerBox.style.display = 'block';
-    timerTime = time;
-  }
-  else {
-    timerBox.style.display = 'none';
+    timerBox.classList.add("box-on");
+    startTimer(time);
+  } else {
+    timerBox.classList.remove("box-on");
   }
 }
 
@@ -265,7 +264,6 @@ function updateTemp() {
 // Connect to the WebSocket server
 const socketLaptop = io.connect("http://192.168.1.x:5000");
 
-<<<<<<< HEAD
 const socketPi = io.connect("http://localhost:5000")
 
 socketLaptop.on("timer_update", (data) => {
@@ -278,39 +276,9 @@ socketLaptop.on("temp_update", (data) => {
 
 socketPi.on("cur_temp", (data) => {
   updateTemp(data.cur_temp)
-=======
-// socket.on("timer_update", (data) => {
-//   setTimerActivity(data.timer_active, data.time)
-// });
-
-socket.on("temp_update", (data) => {
-  setTempActivity(data.temp_active, data.target_temp);
->>>>>>> UI
 });
 
-// // Listen for real-time updates
-// socket.on("update", (data) => {
-//   console.log("Real-time update received:", data);
-//   // document.getElementById("output").innerText = data.data;
-// });
 
-socket.on("timer", (response) => {
-  if (response.bool) {
-    timerBox.classList.add("box-on");
-    startTimer(response.data);
-    // let hours = Math.floor(response.data/3600);
-    // let minutes = Math.floor((response.data - (hours * 3600)) / 60);
-    // let seconds = response.data - (hours * 3600) - (minutes * 60);
-
-    // if (hours < 10) {hours = "0"+hours;}
-    // if (minutes < 10) {minutes = "0"+minutes;}
-    // if (seconds < 10) {seconds = "0"+seconds;}
-    // timerText.innerText = hours + ":" + minutes + "." + seconds;
-  } else {
-    timerBox.classList.remove("box-on");
-    timerText.innerText = "00:00.00";
-  }
-});
 
 // To do:
 // Update timer function
