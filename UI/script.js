@@ -38,19 +38,26 @@ navigator.getUserMedia =
  * Create an input source from the user media stream, connect it to
  * the analyser and start the visualization.
  */
+
+const microphoneStatusText = document.getElementById("microphone-on");
+
 function onStream(stream) {
   console.log("onStream");
   const input = context.createMediaStreamSource(stream);
   input.connect(analyser);
   requestAnimationFrame(visualize);
+  microphoneStatusText.classList.add("mic-on");
+  microphoneStatusText.classList.remove("mic-off");
 }
 
 /**
  * Display an error message.
  */
 function onStreamError(e) {
-  document.body.innerHTML = "<h1>This pen only works with https://</h1>";
-  console.error(e);
+  microphoneStatusText.innerText = "Microphone Permission Denied";
+  microphoneStatusText.classList.remove("mic-on");
+  microphoneStatusText.classList.add("mic-off");
+  console.error("Microphone permission denied");
 }
 
 /**
@@ -190,15 +197,24 @@ function start() {
   context = new AudioContext();
   analyser = context.createAnalyser();
   freqs = new Uint8Array(analyser.frequencyBinCount);
-  document.querySelector("button").remove();
+  // document.querySelector("button").remove();
   navigator.getUserMedia({ audio: true }, onStream, onStreamError);
 }
+
+start();
 
 // Connect to the WebSocket server
 const socket = io.connect("http://localhost:5000");
 
-// Listen for real-time updates
-socket.on("update", (data) => {
-  console.log("Real-time update received:", data);
-  document.getElementById("output").innerText = data.data;
-});
+// // Listen for real-time updates
+// socket.on("update", (data) => {
+//   console.log("Real-time update received:", data);
+//   // document.getElementById("output").innerText = data.data;
+// });
+
+// To do:
+// Update timer function
+// Boolean: true if a timer is running
+
+// Update temperature function
+// Switch between Fahrenheit and Celsius (after MVP)

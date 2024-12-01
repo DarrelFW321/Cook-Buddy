@@ -21,11 +21,11 @@ def on_connect():
 def handle_message(data):
     print(f"Message from client: {data}")
 
-def send_real_time_updates():
-    import time
-    while True:
-        socketio.emit("update", {"data": "Hello, this is a real-time update!"})
-        time.sleep(1)
+# def send_real_time_updates():
+#     import time
+#     while True:
+#         socketio.emit("update", {"data": "Hello, this is a real-time update!"})
+#         time.sleep(1)
 
 if __name__ == "__main__":
     import threading

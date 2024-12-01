@@ -8,9 +8,37 @@
     <script src="script.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
     <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Comfortaa&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:ital@0;1&family=Open+Sans:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <canvas id="canvas"></canvas>
-    <button onClick="start()">Start</button>
+    <!-- <button onClick="start()">Start</button> -->
+    <div class="container">
+      <div class="timer box">
+        <!-- <div class="box-header">Timer</div> -->
+        <div class="timer">00:00.00</div>
+      </div>
+      <div id="microphone-on" class="mic-on">Assistant Listening</div>
+      <div class="temperature box">
+        <div class="temperature">250°C</div>
+      </div>
+    </div>
   </body>
 </html>
