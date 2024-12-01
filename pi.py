@@ -2,6 +2,29 @@ import time
 import threading
 import paramiko
 import json
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+
+app = Flask(__name__)
+socketio = socketIO(app)
+
+@app.route("/")
+def UI():
+    return render_template("interface.html")
+
+@socketio.on("connect")
+def on_connect():
+    print("Client connected!")
+
+@socketio.on("message")
+def handle_message(data):
+    print(f"Message from client: {data}")
+
+if __name__ == "__main__":
+    import threading
+    # Start a thread to handle real-time updates
+    threading.Thread(target=send_real_time_updates).start()
+    socketio.run(app, debug=True)
 
 class sensor:
     input 
@@ -50,9 +73,14 @@ def monitorTemp(required_duration):
                 break
             time.sleep(5)
         
+        socketio.emit("timer", {"data": required_duration, "bool": True})
+        
         # Timer
         for remaining in range(required_duration, 0, -1):
+            socketio.emit("timer", {"data": remaining, "bool": True})
             time.sleep(1)
+        
+        socketio.emit("timer", {"data": 0, "bool": False})
         
     temp_thread = threading.Thread(target=temperature_check)
     temp_thread.daemon = True
