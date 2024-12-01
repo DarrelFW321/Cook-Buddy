@@ -53,6 +53,11 @@ button {
   display: flex;
   justify-content: center;
   padding: 1vh;
+  opacity: 0;
+}
+
+.box-on {
+  opacity: 1;
 }
 
 .box-header {

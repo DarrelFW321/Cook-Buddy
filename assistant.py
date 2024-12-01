@@ -126,11 +126,16 @@ def on_connect():
 def handle_message(data):
     print(f"Message from client: {data}")
     
-def send_timer_update(timer_active, time):
-    socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
+# def send_timer_update(timer_active, time):
+#     socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
 
+<<<<<<< HEAD
 def send_temp_update(temp_active, target_temp):
     socketio.emit("temp_update", {"temp_active": temp_active})
+=======
+# def send_temp_update(temp_active, target_temp):
+#     socketio.emit("temp_update", {"temp_active": temp_active, "target_temp": target_temp})
+>>>>>>> UI
 
 # def send_real_time_updates():
 #     import time
@@ -138,11 +143,11 @@ def send_temp_update(temp_active, target_temp):
 #         socketio.emit("update", {"data": "Hello, this is a real-time update!"})
 #         time.sleep(1)
 
-if __name__ == "__main__":
-    import threading
-    # Start a thread to handle real-time updates
-    threading.Thread(target=send_real_time_updates).start()
-    socketio.run(app, debug=True)
+# if __name__ == "__main__":
+#     import threading
+#     # Start a thread to handle real-time updates
+#     threading.Thread(target=send_real_time_updates).start()
+#     socketio.run(app, debug=True)
 
 
 class assistant: 
