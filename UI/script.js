@@ -265,7 +265,6 @@ function updateTemp() {
 // Connect to the WebSocket server
 const socketLaptop = io.connect("http://192.168.1.x:5000");
 
-<<<<<<< HEAD
 const socketPi = io.connect("http://localhost:5000")
 
 socketLaptop.on("timer_update", (data) => {
@@ -278,14 +277,6 @@ socketLaptop.on("temp_update", (data) => {
 
 socketPi.on("cur_temp", (data) => {
   updateTemp(data.cur_temp)
-=======
-// socket.on("timer_update", (data) => {
-//   setTimerActivity(data.timer_active, data.time)
-// });
-
-socket.on("temp_update", (data) => {
-  setTempActivity(data.temp_active, data.target_temp);
->>>>>>> UI
 });
 
 // // Listen for real-time updates

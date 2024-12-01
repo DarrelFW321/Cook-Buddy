@@ -129,13 +129,8 @@ def handle_message(data):
 # def send_timer_update(timer_active, time):
 #     socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
 
-<<<<<<< HEAD
 def send_temp_update(temp_active, target_temp):
     socketio.emit("temp_update", {"temp_active": temp_active})
-=======
-# def send_temp_update(temp_active, target_temp):
-#     socketio.emit("temp_update", {"temp_active": temp_active, "target_temp": target_temp})
->>>>>>> UI
 
 # def send_real_time_updates():
 #     import time
