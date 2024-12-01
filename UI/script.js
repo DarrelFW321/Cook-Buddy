@@ -254,6 +254,23 @@ socket.on("temp_update", (data) => {
 //   // document.getElementById("output").innerText = data.data;
 // });
 
+const timerText = document.getElementById("timer");
+
+socket.on("timer", response => {
+    if (response.bool) {
+      let hours = Math.floor(response.data/3600);
+      let minutes = Math.floor((response.data - (hours * 3600)) / 60);
+      let seconds = response.data - (hours * 3600) - (minutes * 60);
+
+      if (hours < 10) {hours = "0"+hours;}
+      if (minutes < 10) {minutes = "0"+minutes;}
+      if (seconds < 10) {seconds = "0"+seconds;}
+      timerText.innerText = hours + ":" + minutes + "." + seconds;
+    } else {
+      timerText.innerText = "00:00.00"
+    }
+})
+
 // To do:
 // Update timer function
 // Boolean: true if a timer is running
