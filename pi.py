@@ -77,7 +77,7 @@ def monitorTemp(required_duration):
         
         # Timer
         for remaining in range(required_duration, 0, -1):
-            socketio.emit("timer", {"data": remaining, "bool": True})
+            # socketio.emit("timer", {"data": remaining, "bool": True})
             time.sleep(1)
         
         socketio.emit("timer", {"data": 0, "bool": False})

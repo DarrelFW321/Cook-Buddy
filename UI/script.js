@@ -40,8 +40,8 @@ navigator.getUserMedia =
  */
 
 const microphoneStatusText = document.getElementById("microphone-on");
-const timerBox = document.getElementById('timer-box');
-const temperatureBox = document.getElementById('temperature-box');
+const timerBox = document.getElementById("timer-box");
+const temperatureBox = document.getElementById("temperature-box");
 
 function onStream(stream) {
   console.log("onStream");
@@ -200,52 +200,73 @@ function start() {
   analyser = context.createAnalyser();
   freqs = new Uint8Array(analyser.frequencyBinCount);
   document.querySelector("button").remove();
-  
+
   navigator.getUserMedia({ audio: true }, onStream, onStreamError);
 
   // Play welcome msg
 
-  microphoneStatusText.style.display = 'block';
+  microphoneStatusText.style.display = "block";
 }
 
-function setTimerActivity(timerActive, time) {
-  if (timerActive) {
-    timerBox.style.display = 'block';
-    startTimer(time);
-  }
-  else {
-    timerBox.style.display = 'none';
-  }
-}
+// function setTimerActivity(timerActive, time) {
+//   if (timerActive) {
+//     timerBox.style.display = 'block';
+//     startTimer(time);
+//   }
+//   else {
+//     timerBox.style.display = 'none';
+//   }
+// }
 
 function setTempActivity(tempActive, targetTemp) {
   if (tempActive) {
-    temperatureBox.style.display = 'block';
-    startTemp(targetTemp)
+    temperatureBox.classList.add("box-on");
+    startTemp(targetTemp);
+  } else {
+    temperatureBox.classList.remove("box-on");
   }
-  else {
-    temperatureBox.style.display = 'none';
-  }
 }
 
-function startTimer(time) {
-  
+const timerText = document.getElementById("timer");
+
+function startTimer(durationSeconds) {
+  const interval = setInterval(() => {
+    if (durationSeconds > 0) {
+      // let hours = Math.floor(response.data/3600);
+      // let minutes = Math.floor((response.data - (hours * 3600)) / 60);
+      // let seconds = response.data - (hours * 3600) - (minutes * 60);
+      // if (hours < 10) {hours = "0"+hours;}
+      // if (minutes < 10) {minutes = "0"+minutes;}
+      // if (seconds < 10) {seconds = "0"+seconds;}
+      // timerText.innerText = hours + ":" + minutes + "." + seconds;
+    } else {
+      console.log("Timer of " + durationSeconds.toString() + " done!");
+      clearInterval(interval);
+    }
+  });
+
+  let timerWait = 3;
+  const wait = setInterval(() => {
+    if (timerWait > 0) {
+      timerWait--;
+    } else {
+      clearInterval(wait);
+    }
+  });
+  timerBox.classList.remove("box-on");
 }
 
-function startTemp(targetTemp) {
-
-}
+function startTemp(targetTemp) {}
 
 // Connect to the WebSocket server
 const socket = io.connect("http://localhost:5000");
 
-
-socket.on("timer_update", (data) => {
-  setTimerActivity(data.timer_active, data.time)
-});
+// socket.on("timer_update", (data) => {
+//   setTimerActivity(data.timer_active, data.time)
+// });
 
 socket.on("temp_update", (data) => {
-  setTempActivity(data.temp_active, data.target_temp)
+  setTempActivity(data.temp_active, data.target_temp);
 });
 
 // // Listen for real-time updates
@@ -254,22 +275,23 @@ socket.on("temp_update", (data) => {
 //   // document.getElementById("output").innerText = data.data;
 // });
 
-const timerText = document.getElementById("timer");
+socket.on("timer", (response) => {
+  if (response.bool) {
+    timerBox.classList.add("box-on");
+    startTimer(response.data);
+    // let hours = Math.floor(response.data/3600);
+    // let minutes = Math.floor((response.data - (hours * 3600)) / 60);
+    // let seconds = response.data - (hours * 3600) - (minutes * 60);
 
-socket.on("timer", response => {
-    if (response.bool) {
-      let hours = Math.floor(response.data/3600);
-      let minutes = Math.floor((response.data - (hours * 3600)) / 60);
-      let seconds = response.data - (hours * 3600) - (minutes * 60);
-
-      if (hours < 10) {hours = "0"+hours;}
-      if (minutes < 10) {minutes = "0"+minutes;}
-      if (seconds < 10) {seconds = "0"+seconds;}
-      timerText.innerText = hours + ":" + minutes + "." + seconds;
-    } else {
-      timerText.innerText = "00:00.00"
-    }
-})
+    // if (hours < 10) {hours = "0"+hours;}
+    // if (minutes < 10) {minutes = "0"+minutes;}
+    // if (seconds < 10) {seconds = "0"+seconds;}
+    // timerText.innerText = hours + ":" + minutes + "." + seconds;
+  } else {
+    timerBox.classList.remove("box-on");
+    timerText.innerText = "00:00.00";
+  }
+});
 
 // To do:
 // Update timer function
