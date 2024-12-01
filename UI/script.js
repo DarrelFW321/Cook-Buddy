@@ -42,6 +42,8 @@ navigator.getUserMedia =
 const microphoneStatusText = document.getElementById("microphone-on");
 const timerBox = document.getElementById('timer-box');
 const temperatureBox = document.getElementById('temperature-box');
+const startTimerButton = document.getElementById('start-timer-button');
+timerTime = 0;
 
 function onStream(stream) {
   console.log("onStream");
@@ -211,41 +213,48 @@ function start() {
 function setTimerActivity(timerActive, time) {
   if (timerActive) {
     timerBox.style.display = 'block';
-    startTimer(time);
+    timerTime = time;
   }
   else {
     timerBox.style.display = 'none';
   }
 }
 
-function setTempActivity(tempActive, targetTemp) {
+function setTempActivity(tempActive) {
   if (tempActive) {
-    temperatureBox.style.display = 'block';
-    startTemp(targetTemp)
+    startTimerButton.style.display = 'block';
   }
   else {
     temperatureBox.style.display = 'none';
+    startTimerButton.style.display = 'none';
   }
 }
 
-function startTimer(time) {
+// start timer with global timerTime
+function startTimer() {
   
 }
 
-function startTemp(targetTemp) {
+// update temp
+function updateTemp() {
 
 }
 
 // Connect to the WebSocket server
-const socket = io.connect("http://localhost:5000");
+const socketLaptop = io.connect("http://192.168.1.x:5000");
 
+const socketPi = io.connect("http://localhost:5000")
 
-socket.on("timer_update", (data) => {
+socketLaptop.on("timer_update", (data) => {
   setTimerActivity(data.timer_active, data.time)
 });
 
-socket.on("temp_update", (data) => {
-  setTempActivity(data.temp_active, data.target_temp)
+socketLaptop.on("temp_update", (data) => {
+  setTempActivity(data.temp_active)
+});
+
+socketPi.on("cur_temp", (data) => {
+  updateTemp(data.cur_temp)
 });
 
 // // Listen for real-time updates

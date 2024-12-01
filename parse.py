@@ -75,7 +75,6 @@ def checktime(sentence):
     time = parse_time(sentence)
     if time:
         print(f"Checking sentence:{sentence}")
-        send_timer_update(timer_active=True, time=time) # verify
         return time
     return None
 
@@ -87,7 +86,8 @@ def checktemp(sentence):
     print(f"Checking sentence: {sentence}")
     
     # Check for temperature patterns in Celsius or Fahrenheit
-    match = re.search(r'(\d+\.\d+)°C', sentence) or re.search(r'(\d+)°C', sentence) or re.search(r'(\d+\.\d+)F', sentence) or re.search(r'(\d+)F', sentence)
+    matchC = re.search(r'(\d+\.\d+)\s*°?C', sentence) or re.search(r'(\d+)\s*°?C', sentence)
+    matchF = re.search(r'(\d+\.\d+)\s*F', sentence) or re.search(r'(\d+)\s*F', sentence)
     
     # Define keywords and their associated temperatures in Celsius
     keyword_temperatures = {
@@ -102,35 +102,24 @@ def checktemp(sentence):
         'grill': 180  # Grilling temperature in Celsius
     }
 
-    # Check if any cooking-related keyword exists in the sentence
-    for keyword, temp in keyword_temperatures.items():
-        if keyword in sentence:
-            print(f"Cooking-related keyword detected: {keyword} at {temp}°C")
-            return temp  # Return the temperature for the detected cooking action
-    
     # If no cooking-related keyword is found, check for explicit temperature values
-    if match:
-        temperature = match.group(1)
-        print(f"Temperature detected: {temperature}°")
-        return temperature
-    
-    return None
-    sentence.lower()
-    print(f"Checking sentence:{sentence}")
-    matchC = re.search(r'(\d+\.\d+)\s*°?C', sentence) or re.search(r'(\d+)\s*°?C', sentence)
-    matchF = re.search(r'(\d+\.\d+)\s*F', sentence) or re.search(r'(\d+)\s*F', sentence)
     if matchC:
         temperature = matchC.group(1)
         print(f"Temperature detected: {temperature} °C")
-        # TODO: Need to differentiate between Fahrenheit and Celsius
-        send_temp_update(temp_active=True, target_temp=temperature, unit="°C") # verify
+        return temperature
     elif matchF:
         temperature = matchF.group(1)
         temperature = (temperature - 32) / (9/5)
-        print(f"Temperature detected: {temperature} F")
-        # TODO: Need to differentiate between Fahrenheit and Celsius
-        send_temp_update(temp_active=True, target_temp=temperature, unit="C") # verify
-        pi.monitorTemp()
+        print(f"Temperature detected: {temperature} °C")
+        return temperature
+    
+    # Check if any cooking-related keyword exists in the sentence  
+    else:
+        for keyword, temp in keyword_temperatures.items():
+            if keyword in sentence:
+                print(f"Cooking-related keyword detected: {keyword} at {temp}°C")
+                return temp  # Return the temperature for the detected cooking action
+
 
 
 def scale(sentence):

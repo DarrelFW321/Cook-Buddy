@@ -130,7 +130,7 @@ def send_timer_update(timer_active, time):
     socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
 
 def send_temp_update(temp_active, target_temp):
-    socketio.emit("temp_update", {"temp_active": temp_active, "target_temp": target_temp})
+    socketio.emit("temp_update", {"temp_active": temp_active})
 
 # def send_real_time_updates():
 #     import time
@@ -203,9 +203,11 @@ def parse_sensor():
     if time:
         instruction.instruction_data["timer_duration"] = time
         instruction.instruction_data["set_timer"] = True
+        send_timer_update(timer_active=True, time=time) # verify
     if temp:
         instruction.instruction_data["temperature_goal"] = temp
         instruction.instruction_data["set_temperature"] = True
+        send_temp_update(temp_active=True) # verify
 
 def tts():
     # Prepare text files
