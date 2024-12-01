@@ -1,7 +1,4 @@
 Recipe_Database/
 .venv/
 .env
-*datasettest/
 node_modules/
-package-lock.json
-serviceAccKey.json
