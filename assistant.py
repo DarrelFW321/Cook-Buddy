@@ -3,6 +3,37 @@ import time
 import parse
 import main
 
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+
+app = Flask(__name__)
+socketio = socketIO(app)
+
+@app.route("/")
+def UI():
+    return render_template("interface.html")
+
+@socketio.on("connect")
+def on_connect():
+    print("Client connected!")
+
+@socketio.on("message")
+def handle_message(data):
+    print(f"Message from client: {data}")
+
+def send_real_time_updates():
+    import time
+    while True:
+        socketio.emit("update", {"data": "Hello, this is a real-time update!"})
+        time.sleep(1)
+
+if __name__ == "__main__":
+    import threading
+    # Start a thread to handle real-time updates
+    threading.Thread(target=send_real_time_updates).start()
+    socketio.run(app, debug=True)
+
+
 class assistant: 
     static_timer = False  # global static context variables
     static_scale = False
