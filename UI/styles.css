@@ -60,6 +60,19 @@ button {
   opacity: 1;
 }
 
+.fade-out {
+  animation: fadeOut 1s forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .box-header {
   color: #fff;
   font-size: 1em;
