@@ -152,3 +152,29 @@ def microphone_in():
     )
     listener_thread.start()
 
+
+def AudioOut(wavFile):
+    # Open the .wav file
+    wf = wave.open(wavFile, 'rb')
+
+    # Create an audio stream
+    p = pyaudio.PyAudio()
+    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                    channels=wf.getnchannels(),
+                    rate=wf.getframerate(),
+                    output=True)
+
+    # Read data in chunks and play
+    chunk = 1024
+    data = wf.readframes(chunk)
+    while data:
+        stream.write(data)
+        data = wf.readframes(chunk)
+
+    # Stop and close the stream
+    stream.stop_stream()
+    stream.close()
+
+    # Close PyAudio
+    p.terminate()
+
