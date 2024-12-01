@@ -3,11 +3,11 @@ import dotenv
 import os
 
 # SET THE FOLLOWING FOR EVERY BATCH
-key1or2 = 2  # 2 is anand
-batchNum = 9
+key1or2 = 1  # 2 is anand
+batchNum = 7
 
 dotenv.load_dotenv()
-api_key = os.getenv(f"API_KEY{key1or2}")
+api_key = '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'
 openai.api_key = api_key
 
 client = openai.OpenAI(api_key=api_key)
