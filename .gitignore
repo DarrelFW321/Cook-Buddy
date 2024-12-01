@@ -2,3 +2,10 @@ Recipe_Database/
 .venv/
 .env
 *datasettest/
+batchFilesTest/
+batchFilesOld/
+15datasettest/
+STL FILES/
+mydataset/
+mydataset10k/
+RecipeNLG_dataset.csv
