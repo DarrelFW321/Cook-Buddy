@@ -4,3 +4,8 @@ Recipe_Database/
 *datasettest/
 serviceAccKey.json
 testRecordings/
+Recipe_Database/
+STL FILES/
+mydataset/
+mydataset10k/
+RecipeNLG_dataset.csv
