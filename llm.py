@@ -30,9 +30,9 @@ def generate_response(user_input):
 
     inputs = tokenizer(
         [prompt.format(
-            instruction="",  # You can customize this or make dynamic
+            instruction="Be very specific with instructions and give the time and temperature to cook everything at.",  # You can customize this or make dynamic
             input=user_input,  # The user input will be used here
-            response=""  # Leave blank for generation
+            response=""  # Leave blank for generation   
         )],
         return_tensors="pt"
     ).to("cuda")
@@ -45,11 +45,16 @@ def generate_response(user_input):
         generated_output = model.generate(
             **inputs, 
             streamer=text_streamer, 
-            max_new_tokens=256,  # Limit token count for output
+            max_new_tokens=612,  # Limit token count for output
             temperature=0.7  # Control randomness (lower value = more deterministic)
         )
 
-# Live chat loop
+    # Decode the generated tokens into a string
+    generated_text = tokenizer.decode(generated_output[0], skip_special_tokens=True)
+
+    return generated_text
+
+#Live chat loop
 print("Chat with the model! Type 'exit' to stop.")
 while True:
     user_input = input("You: ")  # Take input from the user
@@ -57,4 +62,5 @@ while True:
         print("Exiting chat. Goodbye!")
         break  # Exit the loop if the user types 'exit'
     else:
-        generate_response(user_input)  # Generate the model response based on user input
+        response = generate_response(user_input)  # Generate the model response based on user input
+        print(f"Model: {response}")  # Print the generated response

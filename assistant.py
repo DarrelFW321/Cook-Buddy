@@ -1,116 +1,143 @@
 import parse
 import requests
 import os
+from flask import Flask, request, jsonify
+import requests
+import speechToText
+import threading
+import llm 
 
 # Replace this with the Raspberry Pi's IP
 PI_IP = "192.168.175.62"
 PI_PORT = 5000  
 SAVE_PATH = "./uploads"  
 
-text = """["Cook spaghetti according to package directions.", "Meanwhile, in a large skillet, heat oil over medium heat. Add garlic and cook 1 minute. Add tomatoes and parsley and cook 5 minutes or until tomatoes are softened.", "Drain spaghetti and transfer to a large serving bowl. Add tomato mixture and Parmesan cheese and toss to combine."]"""
+app = Flask(__name__)
 
-def fetch_audio_from_pi():
-    """Fetch audio file from the Pi."""
-    url = f"http://{PI_IP}:{PI_PORT}/audio"
+
+@app.route('/audio_chunk', methods=['POST'])
+def receive_audio_chunk():
     try:
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            with open(SAVE_PATH, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=1024):
-                    if chunk:
-                        f.write(chunk)
-            print(f"Audio file received and saved to {SAVE_PATH}")
-        else:
-            print(f"Failed to fetch audio: {response.status_code}, {response.json()}")
-    except Exception as e:
-        print(f"Error fetching audio: {e}")
+        audio_file = request.files.get('audio_chunk')
+        if not audio_file:
+            return jsonify({"error": "No audio file received"}),400
+        
+        audio_path = './audio_chunk.wav'
+        audio_file.save(audio_path)
+        print(f"Received audio chunk and saved to {audio_path}")
+        
+        client, config = speechToText.configure()  # Configure the speech-to-text client and config
+        transcription = speechToText.speech_to_text(audio_path, client, config)  # Get transcription
+        
+        print(f"Transcription: {transcription}")
 
-def send_instruction_to_pi(instruction_data, audio_file=None):
-    """Send instruction and optionally an audio file to the Pi."""
+        # Return the transcription result
+        response_data = {
+            "transcription": transcription
+        }
+
+        return jsonify(response_data)
+    
+    except Exception as e:
+        print(f"Error receiving audio chunk: {e}")
+        return jsonify({"error": "Failed to process audio"}), 500
+
+@app.route('/check_instruction_status', methods=['GET'])
+def check_instruction_status():
+    """Check if the assistant is ready for a new instruction."""
+    if instruction.transcription == "":
+        return jsonify({"status": "ready"}), 200  # Assistant is ready for a new instruction
+    else:
+        return jsonify({"status": "busy"}), 200  # Assistant is processing an instruction
+    
+@app.route('/instruction', methods=['POST'])
+def receive_instruction():
+    """Receive instruction from the Pi side."""
+    data = request.json
+    input = data.get('instruction', "")
+    
+    if input:
+        # Simulate processing the instruction
+        instruction.transcription = input
+        print(f"Assistant received instruction: {input}")
+        return jsonify({"status": "success", "instruction": input}), 200
+    else:
+        return jsonify({"error": "No instruction received"}), 400
+
+def send_instruction_to_pi(instruction_data, audio_files=None):
+    """
+    Sends an instruction and optional audio files to the Raspberry Pi server.
+    
+    """
     url = f"http://{PI_IP}:{PI_PORT}/instruction"
     
-    # Prepare the payload without the audio file first
+    # Prepare the payload
     payload = {
-        "send_audio": instruction_data.get("send_audio", False),
         "set_timer": instruction_data.get("set_timer", False),
         "timer_duration": instruction_data.get("timer_duration", 0),
         "set_temperature": instruction_data.get("set_temperature", False),
         "temperature_goal": instruction_data.get("temperature_goal", None),
-        "set_scale": instruction_data.get("set_scale", False),
-        "scale_goal": instruction_data.get("scale_goal", None),
     }
-    
-    # Handle the audio file if send_audio is True or if audio_file is explicitly passed
-    files = None
-    if instruction_data["send_audio"] or audio_file:
-        # If the audio file is passed as an argument, use that
-        if audio_file:
+
+    # Prepare the files dictionary for audio files
+    files = {}
+    if audio_files:
+        for key, file_path in audio_files.items():
             try:
-                files = {'audio_file': open(audio_file, 'rb')}
+                files[key] = open(file_path, 'rb')
             except FileNotFoundError:
-                print(f"Audio file not found: {audio_file}")
+                print(f"Audio file not found: {file_path}")
     
     try:
+        # Send a POST request with the payload and any audio files
         if files:
-            # Send a POST request with both payload and the audio file
             response = requests.post(url, data=payload, files=files)
         else:
-            # Send a POST request without the audio file
             response = requests.post(url, json=payload)
         
         print(f"Instruction sent. Response: {response.json()}")
-        
-        # Close the file after sending
-        if files:
-            files['audio_file'].close()
-            os.remove(audio_file)
 
     except Exception as e:
         print(f"Error sending instruction: {e}")
 
+    finally:
+        # Close all files and remove them if necessary
+        for file in files.values():
+            file.close()
+        for file_path in audio_files.values():
+            if os.path.exists(file_path):
+                os.remove(file_path)
+
 class assistant: 
     static_timer = False  # global static context variables
-    static_scale = False
-    static_scale_value = 0
-    static_audio = False
     static_audio_file = None
     static_temp = False
     static_temp_value = 0
     static_on = True    
 
 class instruction:
-    static_recipe_query = False
-    static_new_recipe = False
+    transcription = ""
     static_recipe = False
     static_current_recipe = []
     static_current_instruction = ""
     static_recipe_index = 0
-    static_interrupt = False
-    audio_file = None
     instruction_data = {
     "instruction": None,
-    "send_audio": False,  # Boolean flag to indicate if an audio file should be sent
     "set_timer": False,  # Boolean flag to indicate if a timer should be set
     "timer_duration": None,  # Duration of the timer (in seconds)
     "set_temperature": False,  # Boolean flag to set a specific temperature threshold
     "temperature_goal": None,  # Temperature goal value
-    "set_scale": False,  # Boolean flag to set a specific scale level
-    "scale_goal": None,  # Scale goal value
 }
     
 def reset_instruction_data():
     instruction.instruction_data.clear()
     instruction.instruction_data = {
     "instruction": None,
-    "send_audio": False,  # Boolean flag to indicate if an audio file should be sent
     "set_timer": False,  # Boolean flag to indicate if a timer should be set
     "timer_duration": None,  # Duration of the timer (in seconds)
     "set_temperature": False,  # Boolean flag to set a specific temperature threshold
     "temperature_goal": None,  # Temperature goal value
-    "set_scale": False,  # Boolean flag to set a specific scale level
-    "scale_goal": None,  # Scale goal value
     }
-    os.remove(instruction.audio_file) #delete instruction audio file
     
     
 def start_recipe(response):
@@ -126,82 +153,94 @@ def continue_recipe():
     if instruction.static_recipe_index + 1 >= len(instruction.static_current_recipe):
         instruction.static_current_recipe = []
         instruction.static_recipe_index = 0
-        instruction.static_current_instruction = send_LLM_instruction(audio)
+        instruction.static_current_instruction = llm.generate_response("I have finished the all steps in the recipe")
         instruction.static_recipe = False
     else:
         instruction.static_recipe_index += 1
         instruction.static_current_instruction = instruction.static_current_recipe[instruction.static_recipe_index]
-        
-def stt() -> audio_file: #set instruction.static_current_instruction into audio file and set that as instruction.audio_file
-    ...
-def tts() -> string: #set audio file from string
-    ...      
-def send_LLM(string):
-    ...
-def send_LLM_instruction(string):
-    ...
+    
  
 def parse_sensor():
     time = parse.checktime(instruction.static_current_instruction)
     temp = parse.checktemp(instruction.static_current_instruction)
-    scale = parse.scale(instruction.static_current_instruction)
-    
     if time:
         instruction.instruction_data["timer_duration"] = time
         instruction.instruction_data["set_timer"] = True
     if temp:
         instruction.instruction_data["temperature_goal"] = temp
         instruction.instruction_data["set_temperature"] = True
-    if scale:
-        instruction.instruction_data["scale_goal"] = scale
-        instruction.instruction_data["set_scale"] = True
-            
-while assistant.static_on:
-    instruction.static_current_instruction = ""
-    instruction.static_recipe_query = False
-    
-    reset_instruction_data()
-    
-    # Placeholder for receiving and processing mic audio
-    audio = fetch_audio_from_pi()
-    input = sst()
-    
-    response = send_LLM(audio)  # Send user input to LLM and get response
-    input_type = parse.parse_type(response)
-    
-    if input_type:
-        instruction.static_recipe_query = True  # If "done" or "this is a recipe"
-    
-    if instruction.static_new_recipe: #do you want to start for new
-        instruction.static_new_recipe = False
-        response = send_LLM_instruction(input)
-        start_recipe(response)
-        tts()
-        parse_sensor()
-        send_instruction_to_pi(instruction.instruction_data, instruction.audio_file)
 
-    elif instruction.static_recipe_query:
-        if input_type == "recipe":
-            if instruction.static_recipe:
-                instruction.static_current_instruction = "Do you want to stop the current recipe?"
-                instruction.static_new_recipe = True
-                tts() 
-                send_instruction_to_pi(instruction.instruction_data, instruction.audio_file)
-            else:
-                response = send_LLM_instruction(input)  # Send actual instruction to LLM and get response
-                start_recipe(response)
-                tts()
-                parse_sensor()
-                send_instruction_to_pi(instruction.instruction_data,instruction.audio_file)
-        else:
-            continue_recipe()
-            tts()
-            parse_sensor()
-            send_instruction_to_pi(instruction.instruction_data,instruction.audio_file)
-    else:
-        response = send_LLM_instruction(input)  # Send actual instruction to LLM and get response
-        instruction.static_current_instruction = response
-        tts()
-        send_instruction_to_pi(instruction.instruction_data,instruction.audio_file)
-    #os.remove(assistant.static_audio_file)
+def tts():
+    # Prepare text files
+    files_to_send = {}
+
+    # Write the instruction to a file
+    instruction_text_file = "/textFiles/instruction.txt"
+    with open(instruction_text_file, 'w') as file:
+        file.write(instruction.static_current_instruction)
+    files_to_send["instruction_audio"] = instruction_text_file  # Audio file for instruction
+
+    # Check if timer is set and write timer file
+    if instruction.instruction_data["set_timer"]:
+        timer_text_file = "/textFiles/timer.txt"
+        with open(timer_text_file, 'w') as file:
+            file.write(f"Timer for {instruction.instruction_data['timer_duration']} seconds has completed!")
+        files_to_send["timer_audio"] = timer_text_file  # Audio file for timer alert
+
+    # Check if temperature goal is set and write temperature file
+    if instruction.instruction_data["set_temperature"]:
+        temperature_text_file = "/textFiles/temperature.txt"
+        with open(temperature_text_file, 'w') as file:
+            file.write(f"Temperature has reached {instruction.instruction_data['temperature_goal']} degrees!")
+        files_to_send["temperature_audio"] = temperature_text_file  # Audio file for temperature alert
+
+    with open(files_to_send["instruction_audio"], 'rb') as f:
+        response = requests.post("http://localhost:5001/text-to-speech/instruction", files={'file': f})
+        print(response.json())
+
+
+    if "timer_audio" in files_to_send:
+        with open(files_to_send["timer_audio"], 'rb') as f:
+            response = requests.post("http://localhost:5001/text-to-speech/timer", files={'file': f})
+            print(response.json())
+
+    if "temperature_audio" in files_to_send:
+        with open(files_to_send["temperature_audio"], 'rb') as f:
+            response = requests.post("http://localhost:5001/text-to-speech/temperature", files={'file': f})
+            print(response.json())
+            
+    send_instruction_to_pi(instruction.instruction_data, audio_files=files_to_send)
     
+ 
+def assistant_logic():
+    while assistant.static_on:
+        instruction.static_current_instruction = ""
+        instruction.transcription= ""
+        
+        reset_instruction_data()
+        
+        # Placeholder for receiving and processing mic audio
+        
+        response = llm.generate_response(instruction.transcription)  # Send user input to LLM and get response
+        input_type = parse.parse_type(response)
+              
+        if input_type:
+            if input_type == "recipe":
+                    response = parse.parse_instruction(response)
+                    start_recipe(response)
+                    parse_sensor()
+                    tts()
+            else:
+                continue_recipe()
+                parse_sensor()
+                tts()
+        else:
+            response = parse.parse_conversation(response)
+            instruction.static_current_instruction = response
+            tts()
+
+if __name__ == '__main__':
+    # Start the background thread for assistant logic
+    threading.thread(target=assistant_logic, daemon=True).start()
+    # Run Flask app
+    app.run(host='0.0.0.0', port=5000, debug=True)

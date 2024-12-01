@@ -10,23 +10,34 @@ def parser(text):
 
 # Parse type of instruction
 def parse_type(text):
-    sentences = parser(text)
-    if re.search(r'\bdone\b', sentences[0].lower()):
-        return "done"
-    
-    if re.search(r'\bthis is a recipe\b', sentences[0].lower()):
+    if re.search(r'\bIngredients: \[', text) and re.search(r'\bInstructions: \[', text):
         return "recipe"
-    
+    if re.search(r'\bdone\b', text.lower()):
+        return "done"
     return None
 
 #Parse actual instruction
 def parse_instruction(text):
+    # Search for the Instructions section using a regular expression
     match = re.search(r'Instructions:\s*\[(.*?)\]', text)
     if match:
+        # Extract the instructions text from the match
         instructions_text = match.group(1)
+        
+        # Use re.findall to capture all the instructions inside the quotes and return them as a list
         instructions = re.findall(r'"(.*?)"', instructions_text)
+        
+        return instructions
 
-    return instructions
+def parse_conversation(response):
+    # Use a regular expression to match the response after '### Response:'
+    match = re.search(r'### Response:\s*(.*)', response)
+    if match:
+        # Return the captured response text
+        return match.group(1).strip()
+    else:
+        # Return an empty string if no response is found
+        return ""
 
     
 # Handles fractional values
@@ -66,14 +77,40 @@ def checktime(sentence):
     return None
 
 def checktemp(sentence):
-    sentence.lower()
-    print(f"Checking sentence:{sentence}")
+    # Convert sentence to lowercase for case-insensitive matching
+    sentence = sentence.lower()
+    
+    # Print the sentence being checked
+    print(f"Checking sentence: {sentence}")
+    
+    # Check for temperature patterns in Celsius or Fahrenheit
     match = re.search(r'(\d+\.\d+)°C', sentence) or re.search(r'(\d+)°C', sentence) or re.search(r'(\d+\.\d+)F', sentence) or re.search(r'(\d+)F', sentence)
+    
+    # Define keywords and their associated temperatures in Celsius
+    keyword_temperatures = {
+        'boil': 100,  # Boiling point of water in Celsius
+        'simmer': 85,  # Simmering temperature range in Celsius
+        'freeze': 0,  # Freezing point of water in Celsius
+        'chill': 4,  # Chilling temperature range in Celsius
+        'heat': 60,  # General heating temperature in Celsius
+        'cook': 75,  # General cooking temperature in Celsius
+        'roast': 200,  # Roasting temperature in Celsius (for baking)
+        'bake': 180,  # Baking temperature in Celsius
+        'grill': 180  # Grilling temperature in Celsius
+    }
 
+    # Check if any cooking-related keyword exists in the sentence
+    for keyword, temp in keyword_temperatures.items():
+        if keyword in sentence:
+            print(f"Cooking-related keyword detected: {keyword} at {temp}°C")
+            return temp  # Return the temperature for the detected cooking action
+    
+    # If no cooking-related keyword is found, check for explicit temperature values
     if match:
         temperature = match.group(1)
         print(f"Temperature detected: {temperature}°")
-        return temperature    
+        return temperature
+    
     return None
 
 
@@ -127,14 +164,14 @@ def main():
         print(parse_time(cur))
         checktime(cur)
         print(checktime(cur))
-    print("\n")
-    print(checktime(texts))
-    print("\n")
-    print(parse_time(texts))
-    print("\n")
-    print(checktemp(texts))
-    print("\n")
-    print(scale(texts))
+    # print("\n")
+    # print(checktime(texts))
+    # print("\n")
+    # print(parse_time(texts))
+    # print("\n")
+    # print(checktemp(texts))
+    # print("\n")
+    # print(scale(texts))
     
 
-main()
+#main()

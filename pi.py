@@ -6,8 +6,12 @@ import time
 import os
 import wave
 import pyaudio
+import requests
 from playsound import playsound
-import speechToText
+
+LAPTOP_IP = "192.168.1.x" 
+LAPTOP_PORT = 5000
+
 
 app = Flask(__name__)
 
@@ -15,30 +19,26 @@ app = Flask(__name__)
 instruction_queue = queue.Queue()
 audioOutQueue = queue.Queue()
 instruction_data = None
+transcription_queue = queue.Queue()  # Queue for managing transcriptions (instructions)
 
 # Paths and thresholds
-OUTPUT_AUDIO_FILE_PATH = "outputAudio.wav"
-TIMER_DURATION = 0  # Timer duration in seconds (can be set dynamically)
+OUTPUT_AUDIO_FILE_PATH = "outputAudio.mp3"
 CO_THRESHOLD = 50      # Carbon Monoxide threshold in ppm
 METHANE_THRESHOLD = 10000  # Methane threshold in ppm (1% or 10,000 ppm)
 LPG_THRESHOLD = 18000  # LPG threshold in ppm
-TEMP_THRESHOLD = None    # Example: Temperature threshold in Celsius
-SCALE_THRESHOLD = None   # Example: Scale threshold
 
 # Sound files for each type of alert
 ALERT_SOUNDS = {
-    "temperature": "temperature_alert.mp3",  # File path to temperature alert sound
-    "co": "co_alert.mp3",                    # File path to CO alert sound
-    "methane": "methane_alert.mp3",          # File path to methane alert sound
-    "lpg": "lpg_alert.mp3" ,                  # File path to LPG alert sound
-    "timer":"timer.mp3",                    # File path to timer aler sound
-    "scale" :"scale_alert.mp3"
+    "activate" : "/AlertSounds/Activate.wav",
+    "deactivate" : "/AlertSounds/Deactivate.wav",
+    "temperature": "/AlertSounds/temperature.wav",  # File path to temperature alert sound
+    "gas": "/AlertSounds/gas.mp3",               
+    "timer":"/AlertSounds/timer.wav",                    # File path to timer alert sound
 }
 
 # State variables for sensors
 sensor_data = {
     "temperature": None,  # Mock temperature, replace with actual sensor data
-    "scale_level": None,   # Mock scale level
     "co_level": None,      # Mock CO level
     "methane_level": None, # Mock methane level
     "lpg_level": None,     # Mock LPG level
@@ -47,7 +47,6 @@ sensor_data = {
 # Threshold goals for sensors
 threshold_goals = {
     "temperature_goal": None,
-    "scale_goal": None
 }
 
 # Lock for sensor data and instruction queue
@@ -56,14 +55,11 @@ instruction_queue_lock = threading.Lock()
 
 sensor_flags = {
     "temperature" : False,
-    "scale" : False
 }
 
 
-# Boolean flags to control output of temperature, scale, and timer alerts
 alert_flags = {
     "temperature_alert": False,
-    "scale_alert": False,
     "timer_alert": False
 }
 
@@ -74,54 +70,75 @@ stop_threads_event = threading.Event()
 def receive_instruction():
     """Receive instruction from the assistant."""
     try:
+        # Get incoming data: form or json
         data = request.form if request.form else request.json
         
-        instruction_data = {
-            "send_audio": data.get("send_audio", False),
+        # Extract instruction data
+        instruction_data = {    
             "set_timer": data.get("set_timer", False),
             "timer_duration": data.get("timer_duration", 0),
             "set_temperature": data.get("set_temperature", False),
             "temperature_goal": data.get("temperature_goal", None),
-            "set_scale": data.get("set_scale", False),
-            "scale_goal": data.get("scale_goal", None),
         }
 
         # Handle setting temperature goal if requested
         if instruction_data["set_temperature"] and instruction_data["temperature_goal"] is not None:
             set_temperature_goal(instruction_data["temperature_goal"])
 
-        # Handle setting scale goal if requested
-        if instruction_data["set_scale"] and instruction_data["scale_goal"] is not None:
-            set_scale_goal(instruction_data["scale_goal"])
-
         # Handle setting a timer if requested
         if instruction_data["set_timer"]:
             instruction_queue.put({"type": "timer", "data": instruction_data["timer_duration"]})
 
-        # Handle receiving and saving an audio file if provided
-        audio_file = request.files.get("audio_file")
-        if audio_file:
-            audio_file.save(OUTPUT_AUDIO_FILE_PATH)
-            instruction_data["audio_file"] = OUTPUT_AUDIO_FILE_PATH
-            print(f"Audio file saved to {OUTPUT_AUDIO_FILE_PATH}")
-            instruction_queue.put({"type": "instruction"})
+        # Initialize a dictionary to store paths for all received audio files
+
+        # Handle receiving and saving the instruction audio file
+        instruction_audio_file = request.files.get("instruction_audio")
+        if instruction_audio_file:
+            instruction_audio_file.save("/AlertSounds/instruction.mp3")
+            instruction_queue.put({"type": "instruction", "path":OUTPUT_AUDIO_FILE_PATH})
+
+        # Handle receiving and saving the timer alert audio file if set
+        if instruction_data["set_timer"]:
+            timer_audio_file = request.files.get("timer_audio")
+            if timer_audio_file:
+                timer_audio_file.save("/AlertSounds/timer.mp3")
+
+
+        # Handle receiving and saving the temperature alert audio file if set
+        if instruction_data["set_temperature"]:
+            temperature_audio_file = request.files.get("temperature_audio")
+            if temperature_audio_file:
+                temperature_audio_file.save("/AlertSounds/temperature.mp3")
 
     except Exception as e:
         print(f"Error receiving instruction: {e}")
 
-@app.route('/audio', methods=['GET'])
-def send_audio_file(filepath):
-    """Send audio file to the assistant."""
-    if audioOutQueue:
-        filePath = audioOutQueue.pop
-        if os.path.exists(filePath):
-            return filePath
-        else:
-            jsonify({"error": "Audio file not found"}), 404
-    else:
-        return jsonify({"error": "No Audio File in Queue"}), 404
 
-# -------- Beep Function -------- #
+def send_audio_file(filePath):
+    """Send audio file to the assistant."""
+    if os.path.exists(filePath):
+        # Prepare the file for sending
+        with open(filePath, 'rb') as audio_file:
+            files = {'audio_chunk': (filePath, audio_file, 'audio/wav')}
+            try:
+                # Send the POST request to the Flask server
+                response = requests.post(f'http://{LAPTOP_IP}:{LAPTOP_PORT}/audio_chunk', files=files)
+
+                if response.status_code == 200:
+                    # Successfully received transcription
+                    transcription = response.json().get("transcription")
+                    print(f"Transcription: {transcription}")
+                    return jsonify({"transcription": transcription}), 200
+                else:
+                    # Handle errors from the Flask server
+                    print(f"Error: {response.json().get('error')}")
+                    return jsonify({"error": "Failed to get transcription from server"}), 500
+            except Exception as e:
+                print(f"Error sending audio file: {e}")
+                return jsonify({"error": "Failed to send audio file"}), 500
+    else:
+        return jsonify({"error": "Audio file not found"}), 404
+
 
 def beep(alert_type):
     """Play a unique sound based on the alert type."""
@@ -129,7 +146,6 @@ def beep(alert_type):
         sound_file = ALERT_SOUNDS[alert_type]
         playsound(sound_file)
 
-# -------- Monitor Sensors -------- #
 
 def monitor_sensors():
     """Monitor sensors and trigger appropriate alerts."""
@@ -140,40 +156,31 @@ def monitor_sensors():
         with sensor_lock:
             if (sensor_flags["temperature"]):
                 temp = sensor_data["temperature"]
-            if (sensor_flags["scale"]):
-                scale = sensor_data["scale_level"]
             co = sensor_data["co_level"]
             methane = sensor_data["methane_level"]
             lpg = sensor_data["lpg_level"]
 
         # Immediate alerts for gas levels
         if co >= CO_THRESHOLD:  # CO Threshold
-            beep("co")
+            beep("gas")
             stop_threads_event.set()  # Stop all threads
             break
         if methane >= METHANE_THRESHOLD:  # Methane Threshold
-            beep("methane")
+            beep("gas")
             stop_threads_event.set()  # Stop all threads
             break
         if lpg >= LPG_THRESHOLD:  # LPG Threshold
-            beep("lpg")
+            beep("gas")
             stop_threads_event.set()  # Stop all threads
             break
         
-        # Lower priority alerts, added to the queue for handling
-        if temp >= TEMP_THRESHOLD and not alert_flags["temperature_alert"]:  # Temperature Threshold
+        if temp >= threshold_goals["temperature_goal"] and not alert_flags["temperature_alert"]:  # Temperature Threshold
             alert_flags["temperature_alert"] = True
             instruction_queue.put({"type": "alert", "data": "Temperature alert!"})
+            threading.Thread(target =beep("temperature"), daemon=True).start()
             reset_temperature_goal()
-
-        if scale >= SCALE_THRESHOLD and not alert_flags["scale_alert"]:  # Scale Threshold
-            alert_flags["scale_alert"] = True
-            instruction_queue.put({"type": "alert", "data": "Scale alert!"})
-            reset_scale_goal()
-        
         time.sleep(0.1)  # Adjust the frequency of monitoring as needed
 
-# -------- Queue Processor -------- #
 
 def process_queue():
     """Process instructions and alerts in the queue."""
@@ -184,17 +191,15 @@ def process_queue():
         task = instruction_queue.get()
         
         if task["type"] == "instruction":
-            AudioOut(OUTPUT_AUDIO_FILE_PATH)
+            AudioOut(task["path"])
+            if (task["path"] == ALERT_SOUNDS["timer"]):
+                alert_flags["timer_alert"] = False
         elif task["type"] == "alert":
             alert_message = task["data"]
             print(f"ALERT: {alert_message}")
             
             if alert_message == "Temperature alert!" and not alert_flags["temperature_alert"]:
-                beep("temperature")
-                alert_flags["temperature_alert"] = True
-            elif alert_message == "Scale alert!" and not alert_flags["scale_alert"]:
-                beep("scale")
-                alert_flags["scale_alert"] = True
+                AudioOut(ALERT_SOUNDS["temperature"])
         elif task["type"] == "timer":
             duration = task["data"]
             print(f"Processing timer for {duration} seconds.")
@@ -208,12 +213,15 @@ def start_timer(duration):
     print(f"Timer started for {duration} seconds.")
     # Countdown loop
     time.sleep(duration)
+    
     print(f"Timer finished after {duration} seconds.")
     
     # Play an alert sound when the timer finishes
     if not alert_flags["timer_alert"]:
-        beep("timer")  # You can change this to a specific alert if you want
+        instruction_queue.put({"type": "instruction", "path": ALERT_SOUNDS["timer"]})
+        beep("timer") 
         alert_flags["timer_alert"] = True
+
 
 def set_temperature_goal(goal):
     """Set the temperature threshold goal."""
@@ -227,20 +235,6 @@ def reset_temperature_goal():
     sensor_data["temperature"] = None
     sensor_flags["temperature"] = False
     print("Temperature goal reset.")
-
-def set_scale_goal(goal):
-    """Set the scale threshold goal."""
-    sensor_flags["scale"] = True
-    threshold_goals["scale_goal"] = goal
-    print(f"Scale goal set to {goal}")
-
-def reset_scale_goal():
-    """Reset the scale goal after it's reached."""
-    threshold_goals["scale_goal"] = None
-    sensor_data["scale_level"] = None
-    sensor_flags["scale"] = False
-    print("Scale goal reset.")
-
 
 # Function to record audio for 10 seconds and save as .wav file
 def record_audio(filename="inputAudio.wav", duration=10, channels=1, rate=44100, chunk=1024):
@@ -279,44 +273,100 @@ def record_audio(filename="inputAudio.wav", duration=10, channels=1, rate=44100,
     return filename
 
 def microphone_in():
-    # Thread function to handle recording and transcription
-    configAndClient = speechToText.configure()
-    client = configAndClient[0]
-    config = configAndClient[1]
-    audioFilePath = "outputAudio.wav"
+    """
+    Listens to the microphone, records audio in 10-second batches,
+    and processes it using the provided STT function.
+    """
     
-    def listen_and_transcribe(stt_function):
-        """
-        Listens to the microphone, records audio in 10-second batches,
-        and processes it using the provided STT function.
-        """
-        output = ""
-        while True:
+    transcription_buffer = ""
+    initial_flag = False
+    
+    while True:
+        if stop_threads_event.is_set():
+            break  # Stop processing the queue if gas alert has been triggered
+
+        try:
             # Record audio and save as .wav
             wav_file = record_audio()
+            transcription = send_audio_file(wav_file)
 
-            # stt_function(wav_file)
+            # Check for valid transcription
+            if transcription and transcription.strip():
+                if initial_flag:
+                    beep("activate")
+                    initial_flag = False
+                # Append transcription to the buffer if there's no ongoing instruction being processed
+                transcription_buffer += transcription.strip() + " "  # Append with a space
+                print(f"Updated instruction buffer: {transcription_buffer}")
+            else:
+                # Handle empty transcription
+                if transcription_buffer.strip():
+                    beep ("deactivate")
+                    initial_flag = True
+                    print(f"Complete instruction received: {transcription_buffer}")
+                    transcription_queue.put(transcription_buffer.strip())  # Add instruction to the queue
+                else:
+                    print("Empty transcription received, no data to send.")
+                    
+                transcription_buffer = ""  # Clear the buffer after adding to the queue
+
+        except Exception as e:
+            print(f"Error in listen_and_transcribe: {e}")
             
-            audioOutQueue.put(audioFilePath)
-            # Pass the recorded audio file to the provided STT function
-            # send via flask to stt on laptop
-            transcription = # retrieve and write      
-            if transcription == "":
-                break
-            output += transcription
+def is_assistant_ready():
+    """Check if the assistant is ready to receive a new instruction."""
+    try:
+        response = requests.get(f"http://{LAPTOP_IP}:{LAPTOP_PORT}/check_instruction_status")
+        if response.status_code == 200:
+            status = response.json().get("status")
+            return status == "ready"
+        else:
+            print(f"Failed to check assistant status. Status code: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"Error checking assistant status: {e}")
+        return False
 
-            # Print the transcription result
-            print(f"Transcription result: {transcription}")
+def send_to_assistant(instruction):
+    """
+    Sends the accumulated instruction to the assistant via HTTP POST.
+    """
+    try:
+        payload = {"instruction": instruction}
+        response = requests.post(f"http://{LAPTOP_IP}:{LAPTOP_PORT}/instruction", json=payload)
+
+        if response.status_code == 200:
+            print(f"Instruction successfully sent to assistant: {instruction}")
+        else:
+            print(f"Failed to send instruction to assistant. Status code: {response.status_code}")
+            print(f"Response: {response.text}")
+    except Exception as e:
+        print(f"Error sending instruction to assistant: {e}")
+            
+            
+def process_transcription_queue():
+    """Process the transcription queue and send instructions when the assistant is ready."""
+    while True:
+        if stop_threads_event.is_set():
+            break  # Stop processing the queue if gas alert has been triggered
+
+        # Wait for an instruction to be available in the queue
+        instruction = transcription_queue.get()
+
+        if instruction:
+            print(f"Processing instruction: {instruction}")
+            
+            # Check if the assistant is ready for a new instruction
+            if is_assistant_ready():
+                send_to_assistant(instruction)  # Send instruction to the assistant
+                transcription_queue.task_done()  # Indicate that the task is finished
+            else:
+                # If the assistant is busy, add the instruction back to the queue
+                print("Assistant is busy, retrying later.")
+                transcription_queue.put(instruction)  # Re-add to the queue for later processing
         
-        return output
-
-    # Start the listener in a new thread
-    listener_thread = threading.Thread(
-        target=listen_and_transcribe, args=(speechToText.speech_to_text(audioFilePath, client, config)), daemon=True
-    )
-    listener_thread.start()
-
-
+        time.sleep(0.25)
+        
 def AudioOut(wavFile):
     # Open the .wav file
     wf = wave.open(wavFile, 'rb')
@@ -339,6 +389,7 @@ def AudioOut(wavFile):
     stream.stop_stream()
     stream.close()
 
+    alert_flags["temperature_alert"] = False
     # Close PyAudio
     p.terminate()
 
@@ -346,13 +397,13 @@ def AudioOut(wavFile):
 # -------- Application Initialization -------- #
 
 if __name__ == '__main__':
-    # Start the sensor monitoring thread
+    threading.Thread(target=process_transcription_queue, daemon=True).start()
+    
+    threading.Thread(target=process_queue, daemon=True).start()
+    
     threading.Thread(target=monitor_sensors, daemon=True).start()
     
     threading.Thread(target=microphone_in, daemon=True).start()
-    
-    # Start the queue processor thread
-    threading.Thread(target=process_queue, daemon=True).start()
-    
+        
     # Run Flask app
     app.run(host='0.0.0.0', port=5000, debug=True)
