@@ -38,8 +38,6 @@ class sensor:
             else:
                 return f"Gas level is safe. ({gas_value} ppm)"
     
-
-
 def monitorTemp(required_duration):
     sensor.temp_detect = True
     def temperature_check():
@@ -84,5 +82,4 @@ def monitorGas(threshold_voltage):
     temp_thread = threading.Thread(target=gas_check)
     temp_thread.daemon = True
     temp_thread.start()
-          
-            
+
