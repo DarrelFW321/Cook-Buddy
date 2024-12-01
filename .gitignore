@@ -1,12 +1,4 @@
 Recipe_Database/
 .venv/
 .env
-*datasettest/
 node_modules/
-package-lock.json
-serviceAccKey.json
-15datasettest/
-STL FILES/
-mydataset/
-mydataset10k/
-RecipeNLG_dataset.csv
