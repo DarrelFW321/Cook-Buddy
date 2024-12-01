@@ -7,7 +7,7 @@ from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-socketio = socketIO(app)
+socketio = SocketIO(app)
 
 @app.route("/")
 def UI():
@@ -20,6 +20,12 @@ def on_connect():
 @socketio.on("message")
 def handle_message(data):
     print(f"Message from client: {data}")
+    
+def send_timer_update(timer_active, time):
+    socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
+
+def send_temp_update(temp_active, target_temp):
+    socketio.emit("temp_update", {"temp_active": temp_active, "target_temp": target_temp})
 
 # def send_real_time_updates():
 #     import time

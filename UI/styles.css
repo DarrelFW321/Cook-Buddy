@@ -20,7 +20,7 @@ h1 {
   height: 400px;
 }
 
-/* button {
+button {
   position: absolute;
   top: 50%;
   left: 50%;
@@ -30,7 +30,7 @@ h1 {
   padding: 0.5em 1.5em;
   border: none;
   background: rgba(255, 255, 255, 0.8);
-} */
+}
 
 .container {
   padding: 2.5vh;

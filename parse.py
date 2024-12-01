@@ -1,4 +1,6 @@
 import re
+from assistant import send_timer_update, send_temp_update
+import pi
 
 # Parses LLM Instructions for recipe
 def parser(text):
@@ -52,7 +54,7 @@ def parse_time(sentence):
         hours = convert_to_decimal(hours)
         minutes = convert_to_decimal(minutes)
 
-        total_time = 360 * hours + 60 * minutes + seconds
+        total_time = 3600 * hours + 60 * minutes + seconds
         return total_time
     return None
 
@@ -61,24 +63,27 @@ def checktime(sentence):
     time = parse_time(sentence)
     if time:
         print(f"Checking sentence:{sentence}")
+        send_timer_update(timer_active=True, time=time) # verify
         return time
     return None
 
 def checktemp(sentence):
     sentence.lower()
     print(f"Checking sentence:{sentence}")
-    match = re.search(r'(\d+\.\d+)°C', sentence) or re.search(r'(\d+)°C', sentence) or re.search(r'(\d+\.\d+)F', sentence) or re.search(r'(\d+)F', sentence)
-
-    if match:
-        temperature = match.group(1)
-        print(f"Temperature detected: {temperature}°")
-        seconds = parse_time(sentence)
+    matchC = re.search(r'(\d+\.\d+)\s*°?C', sentence) or re.search(r'(\d+)\s*°?C', sentence)
+    matchF = re.search(r'(\d+\.\d+)\s*F', sentence) or re.search(r'(\d+)\s*F', sentence)
+    if matchC:
+        temperature = matchC.group(1)
+        print(f"Temperature detected: {temperature} °C")
         # TODO: Need to differentiate between Fahrenheit and Celsius
-        if seconds and seconds > 0:
-            monitorTemp(temperature, seconds)
-        else:
-            return temperature    
-    return None
+        send_temp_update(temp_active=True, target_temp=temperature, unit="°C") # verify
+    elif matchF:
+        temperature = matchF.group(1)
+        temperature = (temperature - 32) / (9/5)
+        print(f"Temperature detected: {temperature} F")
+        # TODO: Need to differentiate between Fahrenheit and Celsius
+        send_temp_update(temp_active=True, target_temp=temperature, unit="C") # verify
+        pi.monitorTemp()
 
 
 def scale(sentence):
