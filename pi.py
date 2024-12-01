@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file
+from flask_socketio import SocketIO, emit
 import threading
 import json
 import queue
@@ -8,6 +9,27 @@ import wave
 import pyaudio
 import requests
 from playsound import playsound
+
+app = Flask(__name__)
+socketio = SocketIO(app)
+
+@app.route("/")
+def UI():
+    return render_template("interface.html")
+
+@socketio.on("connect")
+def on_connect():
+    print("Client connected!")
+
+@socketio.on("message")
+def handle_message(data):
+    print(f"Message from client: {data}")
+
+if __name__ == "__main__":
+    import threading
+    # Start a thread to handle real-time updates
+    threading.Thread(target=send_real_time_updates).start()
+    socketio.run(app, debug=True)
 
 LAPTOP_IP = "192.168.1.x" 
 LAPTOP_PORT = 5000
@@ -109,6 +131,29 @@ def receive_instruction():
             temperature_audio_file = request.files.get("temperature_audio")
             if temperature_audio_file:
                 temperature_audio_file.save("/AlertSounds/temperature.mp3")
+def monitorTemp(required_duration):
+    sensor.temp_detect = True
+    def temperature_check():
+        # Wait until the correct temperature is reached before starting timer
+        while True:
+            sensor.temp_level =  # CHANGE!!! Connect to temperature sensor
+            if sensor.temp_level >= sensor.temp_goal:
+                break
+            time.sleep(5)
+        
+        socketio.emit("timer", {"data": required_duration, "bool": True})
+        
+        # Timer
+        for remaining in range(required_duration, 0, -1):
+            socketio.emit("timer", {"data": remaining, "bool": True})
+            time.sleep(1)
+        
+        socketio.emit("timer", {"data": 0, "bool": False})
+        
+    temp_thread = threading.Thread(target=temperature_check)
+    temp_thread.daemon = True
+    temp_thread.start()
+    sensor.temp_detect = False
 
     except Exception as e:
         print(f"Error receiving instruction: {e}")
