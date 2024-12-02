@@ -200,12 +200,25 @@ function visualize() {
 }
 
 function start() {
-  context = new AudioContext();
-  analyser = context.createAnalyser();
-  freqs = new Uint8Array(analyser.frequencyBinCount);
+  // context = new AudioContext();
+  // analyser = context.createAnalyser();
+  // freqs = new Uint8Array(analyser.frequencyBinCount);
   document.querySelector("button").remove();
 
-  navigator.getUserMedia({ audio: true }, onStream, onStreamError);
+  // navigator.mediaDevices.getUserMedia({ audio: true }, onStream, onStreamError);
+  navigator.mediaDevices
+    .getDisplayMedia({ audio: true, video: false })
+    .then((stream) => {
+        const audioContext = new AudioContext();
+        const mediaStreamSource = audioContext.createMediaStreamSource(stream);
+
+        const analyser = audioContext.createAnalyser();
+        mediaStreamSource.connect(analyser);
+        analyser.connect(audioContext.destination);
+        console.log("Capturing system audio output");
+    }).catch(err => {
+      console.error("Error capturing system audio: ", err);
+    });
 
   // Play welcome msg
 
@@ -299,3 +312,15 @@ socketPi.on("cur_temp", (data) => {
 
 // Update temperature function
 // Switch between Fahrenheit and Celsius (after MVP)
+
+// INGREDIENTS
+const ingredients = [
+  "1 lb spaghetti",
+  "1 (28 ounce) can tomatoes",
+  "2 cloves garlic, minced",
+  "1 onion, chopped",
+  "1 teaspoon oregano",
+  "1 teaspoon basil",
+  "1/2 cup olive oil",
+  "1/4 cup water",
+];
