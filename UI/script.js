@@ -2,7 +2,7 @@
 const WIDTH = 1000;
 const HEIGHT = 400;
 
-const laptopIP = "192.168.1.x"
+const laptopIP = "192.168.1.x";
 
 const ctx = canvas.getContext("2d");
 
@@ -200,29 +200,11 @@ function visualize() {
 }
 
 function start() {
-  // context = new AudioContext();
-  // analyser = context.createAnalyser();
-  // freqs = new Uint8Array(analyser.frequencyBinCount);
+  context = new AudioContext();
+  analyser = context.createAnalyser();
+  freqs = new Uint8Array(analyser.frequencyBinCount);
   document.querySelector("button").remove();
-
-  // navigator.mediaDevices.getUserMedia({ audio: true }, onStream, onStreamError);
-  navigator.mediaDevices
-    .getDisplayMedia({ audio: true, video: false })
-    .then((stream) => {
-        const audioContext = new AudioContext();
-        const mediaStreamSource = audioContext.createMediaStreamSource(stream);
-
-        const analyser = audioContext.createAnalyser();
-        mediaStreamSource.connect(analyser);
-        analyser.connect(audioContext.destination);
-        console.log("Capturing system audio output");
-    }).catch(err => {
-      console.error("Error capturing system audio: ", err);
-    });
-
-  // Play welcome msg
-
-  microphoneStatusText.style.display = "block";
+  navigator.getUserMedia({ audio: true }, onStream, onStreamError);
 }
 
 function setTimerActivity(timerActive, time) {
