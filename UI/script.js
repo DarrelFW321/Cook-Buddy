@@ -42,9 +42,9 @@ navigator.getUserMedia =
  */
 
 const microphoneStatusText = document.getElementById("microphone-on");
-const timerBox = document.getElementById('timer-box');
-const temperatureBox = document.getElementById('temperature-box');
-const startTimerButton = document.getElementById('start-timer-button');
+const timerBox = document.getElementById("timer-box");
+const temperatureBox = document.getElementById("temperature-box");
+const startTimerButton = document.getElementById("start-timer-button");
 timerTime = 0;
 
 function onStream(stream) {
@@ -235,18 +235,25 @@ const timerText = document.getElementById("timer");
 function startTimer(durationSeconds) {
   const interval = setInterval(() => {
     if (durationSeconds > 0) {
-      // let hours = Math.floor(response.data/3600);
-      // let minutes = Math.floor((response.data - (hours * 3600)) / 60);
-      // let seconds = response.data - (hours * 3600) - (minutes * 60);
-      // if (hours < 10) {hours = "0"+hours;}
-      // if (minutes < 10) {minutes = "0"+minutes;}
-      // if (seconds < 10) {seconds = "0"+seconds;}
-      // timerText.innerText = hours + ":" + minutes + "." + seconds;
+      let hours = Math.floor(durationSeconds / 3600);
+      let minutes = Math.floor((durationSeconds - hours * 3600) / 60);
+      let seconds = durationSeconds - hours * 3600 - minutes * 60;
+      if (hours < 10) {
+        hours = "0" + hours;
+      }
+      if (minutes < 10) {
+        minutes = "0" + minutes;
+      }
+      if (seconds < 10) {
+        seconds = "0" + seconds;
+      }
+      timerText.innerText = hours + ":" + minutes + "." + seconds;
+      durationSeconds--;
     } else {
       console.log("Timer of " + durationSeconds.toString() + " done!");
       clearInterval(interval);
     }
-  });
+  }, 1000);
 
   let timerWait = 3;
   const wait = setInterval(() => {
@@ -256,12 +263,22 @@ function startTimer(durationSeconds) {
       clearInterval(wait);
     }
   });
+
+  // Add animation
+  timerBox.classList.add("fade-out");
   timerBox.classList.remove("box-on");
+  timerBox.addEventListener("animationend", () => {
+    timerBox.classList.remove("fade-out");
+  });
 }
 
+<<<<<<< HEAD
 function updateTemp(curTemp) {
   temperatureBox.innerText = curTemp.toString();
 }
+=======
+function updateTemp() {}
+>>>>>>> 96414c381e994a64c77796de35d2ba4305239b7c
 
 // Connect to the WebSocket server
 const socketLaptop = io.connect("http://" + laptopIP + ":5000");
@@ -279,8 +296,6 @@ socketLaptop.on("temp_update", (data) => {
 socketPi.on("cur_temp", (data) => {
   updateTemp(data.cur_temp);
 });
-
-
 
 // To do:
 // Update timer function
