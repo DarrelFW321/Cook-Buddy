@@ -285,13 +285,9 @@ function startTimer(durationSeconds) {
   });
 }
 
-<<<<<<< HEAD
 function updateTemp(curTemp) {
   temperatureBox.innerText = curTemp.toString();
 }
-=======
-function updateTemp() {}
->>>>>>> 96414c381e994a64c77796de35d2ba4305239b7c
 
 // Connect to the WebSocket server
 const socketLaptop = io.connect("http://" + laptopIP + ":5000");
