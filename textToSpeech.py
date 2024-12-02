@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-@app.route('text-to-speech/instruction', method=['POST'])
+@app.route('/text-to-speech/instruction', methods=['POST'])
 def text_to_speech():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -28,8 +28,8 @@ def text_to_speech():
     
     return jsonify({'message': 'instruction audio generated'}), 200
 
-@app.route('text-to-speech/timer', method=['POST'])
-def text_to_speech():
+@app.route('/text-to-speech/timer', methods=['POST'])
+def text_to_speech2():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -49,8 +49,8 @@ def text_to_speech():
     
     return jsonify({'message': 'Timer alert audio generated'}), 200 
 
-@app.route('text-to-speech/temperature', method=['POST'])
-def text_to_speech():
+@app.route('/text-to-speech/temperature', methods=['POST'])
+def text_to_speech3():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 

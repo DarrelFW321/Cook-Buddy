@@ -55,12 +55,12 @@ def generate_response(user_input):
     return generated_text
 
 #Live chat loop
-print("Chat with the model! Type 'exit' to stop.")
-while True:
-    user_input = input("You: ")  # Take input from the user
-    if user_input.lower() == 'exit':
-        print("Exiting chat. Goodbye!")
-        break  # Exit the loop if the user types 'exit'
-    else:
-        response = generate_response(user_input)  # Generate the model response based on user input
-        print(f"Model: {response}")  # Print the generated response
+# print("Chat with the model! Type 'exit' to stop.")
+# while True:
+#     user_input = input("You: ")  # Take input from the user
+#     if user_input.lower() == 'exit':
+#         print("Exiting chat. Goodbye!")
+#         break  # Exit the loop if the user types 'exit'
+#     else:
+#         response = generate_response(user_input)  # Generate the model response based on user input
+#         print(f"Model: {response}")  # Print the generated response
