@@ -9,6 +9,43 @@ import wave
 import pyaudio
 import requests
 from playsound import playsound
+from gpiozero import DigitalInputDevice
+import glob
+
+os.system('modprobe w1-gpio')
+os.system('modprobe w1-therm')
+ 
+base_dir = '/sys/bus/w1/devices/'
+device_folder = glob.glob(base_dir + '28*')[0]
+device_file = device_folder + '/w1_slave'
+
+def read_temp_raw():
+    f = open(device_file, 'r')
+    lines = f.readlines()
+    f.close()
+    return lines
+
+def read_temp():
+    lines = read_temp_raw()
+    while lines[0].strip()[-3:] != 'YES':
+        time.sleep(0.2)
+        lines = read_temp_raw()
+    equals_pos = lines[1].find('t=')
+    if equals_pos != -1:
+        temp_string = lines[1][equals_pos+2:]
+        temp_c = float(temp_string) / 1000.0
+        return temp_c
+    
+# Initialize MQ2 sensor on GPIO17
+mq2 = DigitalInputDevice(17)
+
+def recordgas():
+    while True:
+        sensor_data["gas"] = mq2.value
+
+def readteamploop():
+    while True:
+        sensor_data["temperature"] = read_temp()
 
 app = Flask(__name__)
 socketio = SocketIO(app)   # what to put here
@@ -62,9 +99,7 @@ ALERT_SOUNDS = {
 # State variables for sensors
 sensor_data = {
     "temperature": None,  # Mock temperature, replace with actual sensor data
-    "co_level": None,      # Mock CO level
-    "methane_level": None, # Mock methane level
-    "lpg_level": None,     # Mock LPG level
+    "gas": 1
 }
 
 # Threshold goals for sensors
@@ -198,23 +233,11 @@ def monitor_sensors():
         with sensor_lock:
             if (sensor_flags["temperature"]):
                 temp = sensor_data["temperature"]
-            co = sensor_data["co_level"]
-            methane = sensor_data["methane_level"]
-            lpg = sensor_data["lpg_level"]
 
         # Immediate alerts for gas levels
-        if co >= CO_THRESHOLD:  # CO Threshold
+        if sensor_data["gas"]==0:  # CO Threshold
             beep("gas")
-            stop_threads_event.set()  # Stop all threads
-            break
-        if methane >= METHANE_THRESHOLD:  # Methane Threshold
-            beep("gas")
-            stop_threads_event.set()  # Stop all threads
-            break
-        if lpg >= LPG_THRESHOLD:  # LPG Threshold
-            beep("gas")
-            stop_threads_event.set()  # Stop all threads
-            break
+            stop_threads_event.set()
         
         if temp >= threshold_goals["temperature_goal"] and not alert_flags["temperature_alert"]:  # Temperature Threshold
             alert_flags["temperature_alert"] = True
