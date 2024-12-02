@@ -19,15 +19,26 @@
     <canvas id="canvas"></canvas>
     <button onClick="start()">Hi I'm Cook Buddy! Press to Start!</button>
     <div class="container">
-      <div id ="timer-box" class="timer box">
+      <div id="timer-box" class="timer box">
         <!-- <div class="box-header">Timer</div> -->
         <div class="timer" id="timer"></div>
       </div>
-      <button onClick="startTimer()" id="start-timer-button" style="display: none">Start Timer</button>
-      <div id="microphone-on" class="mic-on" style="display: none">Assistant Listening</div>
+      <button
+        onClick="startTimer()"
+        id="start-timer-button"
+        style="display: none"
+      >
+        Start Timer
+      </button>
+      <div id="microphone-on" class="mic-on" style="display: none">
+        Assistant Listening
+      </div>
       <div id="temperature-box" class="temperature box">
         <div class="temperature">250°C</div>
       </div>
+    </div>
+    <div class="ingredients-container off">
+      <ul id="ingredients"></ul>
     </div>
   </body>
 </html>

@@ -56,6 +56,10 @@ button {
   opacity: 0;
 }
 
+.off {
+  opacity: 0;
+}
+
 .box-on {
   opacity: 1;
 }
@@ -112,4 +116,23 @@ button {
   100% {
     opacity: 0;
   }
+}
+
+.ingredients-container {
+  color: #fff;
+  position: fixed;
+  bottom: 0;
+  width: 100vw;
+  text-align: center;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 1px;
 }

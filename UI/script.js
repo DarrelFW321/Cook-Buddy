@@ -199,12 +199,17 @@ function visualize() {
   requestAnimationFrame(visualize);
 }
 
+const ingredientsContainer = document.querySelector(".ingredients-container");
+
 function start() {
   context = new AudioContext();
   analyser = context.createAnalyser();
   freqs = new Uint8Array(analyser.frequencyBinCount);
   document.querySelector("button").remove();
   navigator.getUserMedia({ audio: true }, onStream, onStreamError);
+  displayIngredients(Sampleingredients);
+  ingredientsContainer.classList.remove("off");
+  ingredientsContainer.classList.add("box-on");
 }
 
 function setTimerActivity(timerActive, time) {
@@ -296,7 +301,7 @@ socketPi.on("cur_temp", (data) => {
 // Switch between Fahrenheit and Celsius (after MVP)
 
 // INGREDIENTS
-const ingredients = [
+const Sampleingredients = [
   "1 lb spaghetti",
   "1 (28 ounce) can tomatoes",
   "2 cloves garlic, minced",
@@ -306,3 +311,12 @@ const ingredients = [
   "1/2 cup olive oil",
   "1/4 cup water",
 ];
+
+const ul = document.getElementById("ingredients");
+const displayIngredients = (ingredients) => {
+  ingredients.forEach((item) => {
+    const li = document.createElement("li");
+    li.textContent = item;
+    ul.appendChild(li);
+  });
+};
