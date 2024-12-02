@@ -2,7 +2,7 @@
 const WIDTH = 1000;
 const HEIGHT = 400;
 
-const laptopIP = "192.168.1.x";
+const laptopIP = "192.168.175.1";
 
 const ctx = canvas.getContext("2d");
 
@@ -277,9 +277,9 @@ function updateTemp(curTemp) {
 }
 
 // Connect to the WebSocket server
-const socketLaptop = io.connect("http://" + laptopIP + ":5000");
+const socketLaptop = io.connect("http://" + laptopIP + ":5002");
 
-const socketPi = io.connect("http://localhost:5000");
+const socketPi = io.connect("http://localhost:5002");
 
 socketLaptop.on("timer_update", (data) => {
   setTimerActivity(data.timer_active, data.time);

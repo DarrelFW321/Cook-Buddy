@@ -3,6 +3,7 @@ import requests
 import os
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO, emit
+import requests
 import speechToText
 import textToSpeech
 import threading
@@ -10,7 +11,7 @@ import llm
 
 # Replace this with the Raspberry Pi's IP
 PI_IP = "192.168.175.4"
-PI_PORT = 5000  
+PI_PORT = 5002  
 SAVE_PATH = "./uploads"  
 
 app = Flask(__name__)
@@ -22,7 +23,7 @@ def receive_audio_chunk():
     try:
         audio_file = request.files.get('audio_chunk')
         if not audio_file:
-            return jsonify({"error": "No audio file received"}), 400
+            return jsonify({"error": "No audio file received"}),400
         
         audio_path = './audio_chunk.wav'
         audio_file.save(audio_path)
@@ -124,11 +125,25 @@ def handle_message(data):
 
 @socketio.on("timer_update")
 def send_timer_update(timer_active, time):
+    
     socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
 
 @socketio.on("temp_update")
 def send_temp_update(temp_active):
     socketio.emit("temp_update", {"temp_active": temp_active})
+
+# def send_real_time_updates():
+#     import time
+#     while True:
+#         socketio.emit("update", {"data": "Hello, this is a real-time update!"})
+#         time.sleep(1)
+
+# if __name__ == "__main__":
+#     import threading
+#     # Start a thread to handle real-time updates
+#     threading.Thread(target=send_real_time_updates).start()
+#     socketio.run(app, debug=True)
+
 
 class assistant: 
     static_timer = False  # global static context variables
@@ -175,7 +190,7 @@ def continue_recipe():
     if instruction.static_recipe_index + 1 >= len(instruction.static_current_recipe):
         instruction.static_current_recipe = []
         instruction.static_recipe_index = 0
-        instruction.static_current_instruction = llm.generate_response("I have finished all steps in the recipe")
+        instruction.static_current_instruction = llm.generate_response("I have finished the all steps in the recipe")
         instruction.static_recipe = False
     else:
         instruction.static_recipe_index += 1
@@ -199,21 +214,21 @@ def tts():
     files_to_send = {}
 
     # Write the instruction to a file
-    instruction_text_file = "./textFiles/instruction.txt"
+    instruction_text_file = "/textFiles/instruction.txt"
     with open(instruction_text_file, 'w') as file:
         file.write(instruction.static_current_instruction)
     files_to_send["instruction_audio"] = instruction_text_file  # Audio file for instruction
 
     # Check if timer is set and write timer file
     if instruction.instruction_data["set_timer"]:
-        timer_text_file = "./textFiles/timer.txt"
+        timer_text_file = "/textFiles/timer.txt"
         with open(timer_text_file, 'w') as file:
             file.write(f"Timer for {instruction.instruction_data['timer_duration']} seconds has completed!")
         files_to_send["timer_audio"] = timer_text_file  # Audio file for timer alert
 
     # Check if temperature goal is set and write temperature file
     if instruction.instruction_data["set_temperature"]:
-        temperature_text_file = "./textFiles/temperature.txt"
+        temperature_text_file = "/textFiles/temperature.txt"
         with open(temperature_text_file, 'w') as file:
             file.write(f"Temperature has reached {instruction.instruction_data['temperature_goal']} degrees!")
         files_to_send["temperature_audio"] = temperature_text_file  # Audio file for temperature alert
@@ -221,6 +236,7 @@ def tts():
     with open(files_to_send["instruction_audio"], 'rb') as f:
         response = requests.post("http://localhost:5001/text-to-speech/instruction", files={'file': f})
         print(response.json())
+
 
     if "timer_audio" in files_to_send:
         with open(files_to_send["timer_audio"], 'rb') as f:
@@ -233,11 +249,12 @@ def tts():
             print(response.json())
             
     send_instruction_to_pi(instruction.instruction_data, audio_files=files_to_send)
+    
  
 def assistant_logic():
     while assistant.static_on:
         instruction.static_current_instruction = ""
-        instruction.transcription = ""
+        instruction.transcription= ""
         
         reset_instruction_data()
         
@@ -246,7 +263,6 @@ def assistant_logic():
         response = llm.generate_response(instruction.transcription)  # Send user input to LLM and get response
         input_type = parse.parse_type(response)
               
-        
         if input_type:
             if input_type == "recipe":
                     response = parse.parse_instruction(response)
@@ -259,11 +275,11 @@ def assistant_logic():
                 tts()
         else:
             response = parse.parse_conversation(response)
-            instruction.static_current_instruction = response 
+            instruction.static_current_instruction = response
             tts()
 
 if __name__ == '__main__':
     # Start the background thread for assistant logic
-    threading.Thread(target=assistant_logic, daemon=True).start()  # Fix threading call
+    threading.thread(target=assistant_logic, daemon=True).start()
     # Run Flask app
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    app.run(threaded=True, host='0.0.0.0', port=5000, debug=True)

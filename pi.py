@@ -72,8 +72,8 @@ def sendTempToJS(curTemp):
     #print(f"TImer update received: {data}")
 
 
-LAPTOP_IP = "192.168.1.x" 
-LAPTOP_PORT = 5000
+LAPTOP_IP = "192.168.175.1" 
+LAPTOP_PORT = 5002
 
 # Define the instruction queue globally
 instruction_queue = queue.Queue()
