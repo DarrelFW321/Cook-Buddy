@@ -2,6 +2,8 @@
 const WIDTH = 1000;
 const HEIGHT = 400;
 
+const laptopIP = "192.168.1.x"
+
 const ctx = canvas.getContext("2d");
 
 // options to tweak the look
@@ -257,25 +259,25 @@ function startTimer(durationSeconds) {
   timerBox.classList.remove("box-on");
 }
 
-function updateTemp() {
-
+function updateTemp(curTemp) {
+  temperatureBox.innerText = curTemp.toString();
 }
 
 // Connect to the WebSocket server
-const socketLaptop = io.connect("http://192.168.1.x:5000");
+const socketLaptop = io.connect("http://" + laptopIP + ":5000");
 
-const socketPi = io.connect("http://localhost:5000")
+const socketPi = io.connect("http://localhost:5000");
 
 socketLaptop.on("timer_update", (data) => {
-  setTimerActivity(data.timer_active, data.time)
+  setTimerActivity(data.timer_active, data.time);
 });
 
 socketLaptop.on("temp_update", (data) => {
-  setTempActivity(data.temp_active)
+  setTempActivity(data.temp_active);
 });
 
 socketPi.on("cur_temp", (data) => {
-  updateTemp(data.cur_temp)
+  updateTemp(data.cur_temp);
 });
 
 
