@@ -1,7 +1,8 @@
 import parse
 import requests
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, emit
 import requests
 import speechToText
 import threading
@@ -13,6 +14,7 @@ PI_PORT = 5000
 SAVE_PATH = "./uploads"  
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 
 @app.route('/audio_chunk', methods=['POST'])
@@ -108,12 +110,6 @@ def send_instruction_to_pi(instruction_data, audio_files=None):
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-from flask import Flask, render_template
-from flask_socketio import SocketIO, emit
-
-app = Flask(__name__)
-socketio = SocketIO(app)
-
 @app.route("/")
 def UI():
     return render_template("interface.html")
@@ -125,11 +121,14 @@ def on_connect():
 @socketio.on("message")
 def handle_message(data):
     print(f"Message from client: {data}")
-    
-# def send_timer_update(timer_active, time):
-#     socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
 
-def send_temp_update(temp_active, target_temp):
+@socketio.on("timer_update")
+def send_timer_update(timer_active, time):
+    
+    socketio.emit("timer_update", {"timer_active": timer_active, "time": time})
+
+@socketio.on("temp_update")
+def send_temp_update(temp_active):
     socketio.emit("temp_update", {"temp_active": temp_active})
 
 # def send_real_time_updates():
@@ -282,4 +281,4 @@ if __name__ == '__main__':
     # Start the background thread for assistant logic
     threading.thread(target=assistant_logic, daemon=True).start()
     # Run Flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(threaded=True, host='0.0.0.0', port=5000, debug=True)

@@ -109,7 +109,7 @@ def checktemp(sentence):
         return temperature
     elif matchF:
         temperature = matchF.group(1)
-        temperature = (temperature - 32) / (9/5)
+        temperature =  int((temperature - 32) / (9/5))
         print(f"Temperature detected: {temperature} °C")
         return temperature
     

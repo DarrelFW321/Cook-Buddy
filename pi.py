@@ -11,7 +11,7 @@ import requests
 from playsound import playsound
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app)   # what to put here
 
 @app.route("/")
 def UI():
@@ -25,17 +25,18 @@ def on_connect():
 def handle_message(data):
     print(f"Message from client: {data}")
 
-if __name__ == "__main__":
-    import threading
-    # Start a thread to handle real-time updates
-    threading.Thread(target=send_real_time_updates).start()
-    socketio.run(app, debug=True)
+@socketio.on("cur_temp")
+def sendTempToJS(curTemp):
+    socketio.emit("tempData", {"curTemp": curTemp})
+    
+    
+#@socketio.on("timer_update")
+#def handle_timer_update(data):
+    #print(f"TImer update received: {data}")
+
 
 LAPTOP_IP = "192.168.1.x" 
 LAPTOP_PORT = 5000
-
-
-app = Flask(__name__)
 
 # Define the instruction queue globally
 instruction_queue = queue.Queue()
@@ -91,57 +92,56 @@ stop_threads_event = threading.Event()
 @app.route('/instruction', methods=['POST'])
 def receive_instruction():
     """Receive instruction from the assistant."""
-    try:
-        # Get incoming data: form or json
-        data = request.form if request.form else request.json
-        
-        # Extract instruction data
-        instruction_data = {    
-            "set_timer": data.get("set_timer", False),
-            "timer_duration": data.get("timer_duration", 0),
-            "set_temperature": data.get("set_temperature", False),
-            "temperature_goal": data.get("temperature_goal", None),
-        }
+    # Get incoming data: form or json
+    data = request.form if request.form else request.json
+    
+    # Extract instruction data
+    instruction_data = {    
+        "set_timer": data.get("set_timer", False),
+        "timer_duration": data.get("timer_duration", 0),
+        "set_temperature": data.get("set_temperature", False),
+        "temperature_goal": data.get("temperature_goal", None),
+    }
 
-        # Handle setting temperature goal if requested
-        if instruction_data["set_temperature"] and instruction_data["temperature_goal"] is not None:
-            set_temperature_goal(instruction_data["temperature_goal"])
+    # Handle setting temperature goal if requested
+    if instruction_data["set_temperature"] and instruction_data["temperature_goal"] is not None:
+        set_temperature_goal(instruction_data["temperature_goal"])
 
-        # Handle setting a timer if requested
-        if instruction_data["set_timer"]:
-            instruction_queue.put({"type": "timer", "data": instruction_data["timer_duration"]})
+    # Handle setting a timer if requested
+    if instruction_data["set_timer"]:
+        instruction_queue.put({"type": "timer", "data": instruction_data["timer_duration"]})
 
-        # Initialize a dictionary to store paths for all received audio files
+    # Initialize a dictionary to store paths for all received audio files
 
-        # Handle receiving and saving the instruction audio file
-        instruction_audio_file = request.files.get("instruction_audio")
-        if instruction_audio_file:
-            instruction_audio_file.save("/AlertSounds/instruction.mp3")
-            instruction_queue.put({"type": "instruction", "path":OUTPUT_AUDIO_FILE_PATH})
+    # Handle receiving and saving the instruction audio file
+    instruction_audio_file = request.files.get("instruction_audio")
+    if instruction_audio_file:
+        instruction_audio_file.save("/AlertSounds/instruction.mp3")
+        instruction_queue.put({"type": "instruction", "path":OUTPUT_AUDIO_FILE_PATH})
 
-        # Handle receiving and saving the timer alert audio file if set
-        if instruction_data["set_timer"]:
-            timer_audio_file = request.files.get("timer_audio")
-            if timer_audio_file:
-                timer_audio_file.save("/AlertSounds/timer.mp3")
+    # Handle receiving and saving the timer alert audio file if set
+    if instruction_data["set_timer"]:
+        timer_audio_file = request.files.get("timer_audio")
+        if timer_audio_file:
+            timer_audio_file.save("/AlertSounds/timer.mp3")
 
 
-        # Handle receiving and saving the temperature alert audio file if set
-        if instruction_data["set_temperature"]:
-            temperature_audio_file = request.files.get("temperature_audio")
-            if temperature_audio_file:
-                temperature_audio_file.save("/AlertSounds/temperature.mp3")
+    # Handle receiving and saving the temperature alert audio file if set
+    if instruction_data["set_temperature"]:
+        temperature_audio_file = request.files.get("temperature_audio")
+        if temperature_audio_file:
+            temperature_audio_file.save("/AlertSounds/temperature.mp3")
+
 def monitorTemp(required_duration):
-    sensor.temp_detect = True
+    sensor_flags["temperature"] = True
     def temperature_check():
         # Wait until the correct temperature is reached before starting timer
         while True:
-            sensor.temp_level =  # CHANGE!!! Connect to temperature sensor
-            if sensor.temp_level >= sensor.temp_goal:
+            curTemp = sensor_data["temperature"] # CHANGE!!! Connect to temperature sensor
+            if curTemp >= threshold_goals["temperature_goal"]:
                 break
+            sendTempToJS()
             time.sleep(5)
-        
-        socketio.emit("timer", {"data": required_duration, "bool": True})
         
         # Timer
         for remaining in range(required_duration, 0, -1):
@@ -153,10 +153,7 @@ def monitorTemp(required_duration):
     temp_thread = threading.Thread(target=temperature_check)
     temp_thread.daemon = True
     temp_thread.start()
-    sensor.temp_detect = False
-
-    except Exception as e:
-        print(f"Error receiving instruction: {e}")
+    sensor_flags["temperature"] = False
 
 
 def send_audio_file(filePath):
@@ -441,14 +438,10 @@ def AudioOut(wavFile):
 
 # -------- Application Initialization -------- #
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     threading.Thread(target=process_transcription_queue, daemon=True).start()
-    
     threading.Thread(target=process_queue, daemon=True).start()
-    
     threading.Thread(target=monitor_sensors, daemon=True).start()
-    
     threading.Thread(target=microphone_in, daemon=True).start()
-        
-    # Run Flask app
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
