@@ -4,6 +4,9 @@ A friendly, interactive assistant who not only cooks alongside you but adapts re
 
 Video Demo:https://www.youtube.com/watch?v=q-WvIjfFc7Q&ab_channel=Louie
 
+![Demo ScreenShot](image.png)
+![Demo ScreenShot2](image2.png)
+
 Working Branches:
 1. LaptopMain
 2. RaspberryPi
