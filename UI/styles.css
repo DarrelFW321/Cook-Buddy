@@ -1,0 +1,138 @@
+* {
+  box-sizing: border-box;
+  font-family: "Nunito", sans-serif, monospace;
+}
+
+body {
+  background: radial-gradient(farthest-side, #182158 0%, #030414 100%) no-repeat
+    fixed 0 0;
+  margin: 0;
+}
+h1 {
+  color: #fff;
+  font: 10vh/1.2 sans-serif;
+}
+#canvas {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 400px;
+}
+
+button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  font-size: 2vw;
+  border-radius: 9em;
+  padding: 0.5em 1.5em;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.container {
+  padding: 2.5vh;
+  display: flex;
+  justify-content: space-between;
+}
+
+#microphone-on {
+  z-index: 0;
+  font-size: 3.5vh;
+}
+
+.box {
+  z-index: 2;
+  /* background-color: rgba(79, 91, 141, 0.0); */
+  width: 30vw;
+  height: 25vh;
+  border-radius: 1em;
+  /* border: #394576 2px solid; */
+  display: flex;
+  justify-content: center;
+  padding: 1vh;
+  opacity: 0;
+}
+
+.off {
+  opacity: 0;
+}
+
+.box-on {
+  opacity: 1;
+}
+
+.fade-out {
+  animation: fadeOut 1s forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.box-header {
+  color: #fff;
+  font-size: 1em;
+}
+
+.timer,
+.temperature {
+  padding-top: 5vh;
+  color: #fff;
+  font-size: 2.3em;
+}
+
+.timer {
+  padding-left: 2.5vw;
+}
+
+.temperature {
+  padding-right: 2.5vw;
+}
+
+.mic-off {
+  color: red;
+}
+
+.mic-on {
+  color: antiquewhite;
+  animation: fadeIn 4s infinite ease-in-out;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.ingredients-container {
+  color: #fff;
+  position: fixed;
+  bottom: 0;
+  width: 100vw;
+  text-align: center;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin-bottom: 1px;
+}
